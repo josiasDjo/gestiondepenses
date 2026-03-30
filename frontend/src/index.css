@@ -1,47 +1,238 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@theme {
+   /* Couleurs principales (Votre charte graphique) */
+  --color-primary-50: #fff1e6;
+  --color-primary-100: #ffe2cc;
+  --color-primary-200: #ffc499;
+  --color-primary-300: #ffa666;
+  --color-primary-400: #ff8833;
+  --color-primary-500: #f58220;
+  --color-primary-600: #e06e0c;
+  --color-primary-700: #b85609;
+  --color-primary-800: #903e07;
+  --color-primary-900: #682604;
+  
+  --color-secondary-50: #e8edf5;
+  --color-secondary-100: #d1dbea;
+  --color-secondary-200: #a3b7d5;
+  --color-secondary-300: #7593c0;
+  --color-secondary-400: #476fab;
+  --color-secondary-500: #1a4b96;
+  --color-secondary-600: #133a73;
+  --color-secondary-700: #0c2c50;
+  --color-secondary-800: #052846;
+  --color-secondary-900: #031c32;
+  
+  /* Couleurs fonctionnelles */
+  --color-success: #10b981;
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+  --color-dark: #1f2937;
+  --color-light: #f3f4f6;
+  
+  /* Couleurs de texte */
+  --color-text-primary: #374151;
+  --color-text-secondary: #6b7280;
+  --color-text-light: #9ca3af;
+  --color-text-dark: #111827;
+  
+  /* Dégradés */
+  --gradient-hero: linear-gradient(135deg, #052846 0%, #1a4b96 50%, #f58220 100%);
+  --gradient-background: linear-gradient(135deg, #fef9f5 0%, #ffffff 100%);
+  
+  /* Polices */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
 
 @layer base {
-  :root {
-    --primary: #6366f1;
-    --primary-dark: #4f46e5;
-    --secondary: #10b981;
-    --danger: #ef4444;
-    --warning: #f59e0b;
-    --dark: #1f2937;
-    --light: #f3f4f6;
-  }
-
-  body {
-    font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-  }
-
   * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
   }
+  
+  body {
+    font-family: var(--font-sans);
+    background: var(--gradient-background);
+    min-height: 100vh;
+    color: var(--color-text-primary);
+  }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-all duration-200 transform hover:scale-105;
+    background-color: var(--color-primary-500);
+    color: white;
+    padding: 0.5rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    transform: scale(1);
+    cursor: pointer;
+  }
+  .btn-primary:hover {
+    background-color: var(--color-primary-600);
+    transform: scale(1.05);
+  }
+  .btn-primary:focus {
+    outline: none;
+    ring: 2px solid var(--color-primary-500);
+    ring-offset: 2px;
   }
   
   .btn-secondary {
-    @apply bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-all duration-200;
+    background-color: var(--color-secondary-800);
+    color: white;
+    padding: 0.5rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  .btn-secondary:hover {
+    background-color: var(--color-secondary-900);
   }
   
   .card {
-    @apply bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300;
+    background-color: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    padding: 1.5rem;
+    transition: box-shadow 0.3s ease;
+  }
+  .card:hover {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   }
   
   .input-field {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent;
+    width: 100%;
+    padding: 0.5rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+  }
+  .input-field:focus {
+    outline: none;
+    ring: 2px solid var(--color-primary-500);
+    border-color: transparent;
+  }
+  
+  .input-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: var(--color-text-primary);
+  }
+  
+  .stat-card {
+    background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-600));
+    color: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+  }
+  
+  .badge-success {
+    background-color: #d1fae5;
+    color: #065f46;
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  
+  .badge-danger {
+    background-color: #fee2e2;
+    color: #991b1b;
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  
+  .badge-warning {
+    background-color: #fef3c7;
+    color: #92400e;
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  
+  .badge-info {
+    background-color: var(--color-primary-100);
+    color: var(--color-primary-800);
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  
+  .alert-success {
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+  }
+  
+  .alert-error {
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+  }
+  
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-text-secondary);
+    transition: color 0.2s ease;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+  }
+  .nav-link:hover {
+    color: var(--color-primary-500);
+  }
+  
+  .text-gradient {
+    background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-600));
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }
