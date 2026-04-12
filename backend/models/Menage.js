@@ -1,22 +1,11 @@
-module.exports = (sequelize, DataTypes) => {
-    const Menage = sequelize.define('Menage', {
-        id_menage: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
-        },
-        nom_menage: {
-        type: DataTypes.STRING(100),
-        allowNull: false
-        },
-        id_devise_principale: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        references: {
-            model: 'devises',
-            key: 'id_devise'
-        }
-        }
+const { DataTypes } = require('sequelize');
+const sequelize = require('./index');
+
+
+const Menage = sequelize.define('Menage', {
+        id_menage: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+        nom_menage: { type: DataTypes.STRING(100), allowNull: false },
+        id_devise_principale: { type: DataTypes.INTEGER, allowNull: true, references: { model: 'devises', key: 'id_devise' } }
     }, {
         tableName: 'menages',
         timestamps: false
@@ -51,5 +40,4 @@ module.exports = (sequelize, DataTypes) => {
         });
     };
 
-    return Menage;
-};
+module.exports = Menage;

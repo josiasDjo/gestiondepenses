@@ -1,75 +1,126 @@
 const jwt = require('jsonwebtoken');
-const { Utilisateur, Menage, membres_menage } = require('../models');
+const Utilisateur = require('../models/Utilisateur');
+const Menage = require('../models/Menage')
 const config = require('../config/env');
+const passport = require('passport-google-oauth20')
+const bcrypt = require("bcryptjs");
+const { where } = require('sequelize'); 
 
 const genererToken = (id) => {
-    return jwt.sign({ id }, config.JWT_SECRET, {
-        expiresIn: config.JWT_EXPIRE
-    });
+  return jwt.sign({ id }, config.JWT_SECRET, {
+    expiresIn: config.JWT_EXPIRE
+  });
 };
 
-// Inscription
+// Inscription Normal
 const register = async (req, res) => {
-    try {
-        const { nom, email, mot_de_passe, nom_menage } = req.body;
-        
-        const userExists = await Utilisateur.findOne({ where: { email } });
-        if (userExists) {
-            return res.status(400).json({ message: 'Cet email est déjà utilisé' });
-        }
-        
-        const user = await Utilisateur.create({ nom, email, mot_de_passe });
-        
-        // Créer un ménage par défaut
-        const menage = await Menage.create({ 
-            nom_menage: nom_menage || `Ménage de ${nom}` 
-        });
-        
-        // Associer l'utilisateur au ménage
-        await user.addMenage(menage);
-        
-        const token = genererToken(user.id_utilisateur);
-        
-        res.status(201).json({
-            id: user.id_utilisateur,
-            nom: user.nom,
-            email: user.email,
-            token
-        });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+  try {
+    const { nom, email, mot_de_passe } = req.body;
+
+    const saltRounds = 10;
+    const mot_de_passe_hash = await bcrypt.hash(mot_de_passe, saltRounds);
+
+    const userExists = await Utilisateur.findOne({ where : { email }})
+    if (userExists) {
+      return res.status(400).json({ message: 'Cet email est déjà utilisé' });
     }
+    
+    const user = await Utilisateur.create({ 
+      nom, 
+      email, 
+      mot_de_passe : mot_de_passe_hash,
+      provider: 'local'
+    });
+    
+    // Créer un ménage par défaut
+    const menage = await Menage.create({ 
+      nom_menage: `Ménage de ${nom}` 
+    });
+    
+    // Associer l'utilisateur au ménage
+    await user.addMenage(menage);
+    
+    const token = genererToken(user.id_utilisateur);
+    
+    res.status(201).json({
+      id: user.id_utilisateur,
+      nom: user.nom,
+      email: user.email,
+      avatar: user.avatar,
+      token
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+    console.log("Erreur lors de l'inscrption : ", error)
+  }
 };
 
-// Connexion
+// Connexion Normale
 const login = async (req, res) => {
-    try {
-        const { email, mot_de_passe } = req.body;
-        
-        const user = await Utilisateur.findOne({ where: { email } });
-        if (!user) {
-            return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
-        }
-    
-        const isPasswordValid = await user.verifierMotDePasse(mot_de_passe);
-        if (!isPasswordValid) {
-            return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
-        }
-    
-        const token = genererToken(user.id_utilisateur);
-        
-        res.json({
-            id: user.id_utilisateur,
-            nom: user.nom,
-            email: user.email,
-            token
-            });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+  try {
+    const { email, password } = req.body;
+    const user = await Utilisateur.findOne({ where: { email } });
+    if (!user) {
+      return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
     }
+    
+    // Vérifier si c'est un compte Google
+    if (user.provider === 'google') {
+      return res.status(401).json({ 
+        message: 'Ce compte utilise Google. Veuillez vous connecter avec Google.' 
+      });
+    }
+    const saltRounds = 10;
+
+    const isPasswordValid = await bcrypt.compare(password, user.mot_de_passe);
+    if (!isPasswordValid) {
+      console.log('Erreur : Email ou mot de passe incorrect')
+      return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
+    }
+    
+    const token = genererToken(user.id_utilisateur);
+    
+    res.json({
+      id: user.id_utilisateur,
+      nom: user.nom,
+      email: user.email,
+      avatar: user.avatar,
+      token
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
-// Profil utilisateur
+// ========== Routes Google OAuth ==========
+
+// Démarrer l'authentification Google
+// const googleAuth = passport.authenticate('google', {
+//     scope: ['profile', 'email'],
+//     session: true
+// });
+
+// // Callback après authentification Google
+// const googleCallback = (req, res, next) => {
+//     passport.authenticate('google', { session: true }, async (err, user, info) => {
+//         if (err || !user) {
+//         return res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`);
+//         }
+        
+//         // Générer un token JWT
+//         const token = genererToken(user.id_utilisateur);
+        
+//         // Rediriger vers le frontend avec le token
+//         res.redirect(`${process.env.FRONTEND_URL}/oauth-callback?token=${token}&user=${encodeURIComponent(JSON.stringify({
+//         id: user.id_utilisateur,
+//         nom: user.nom,
+//         email: user.email,
+//         avatar: user.avatar
+//         }))}`);
+//     })(req, res, next);
+// };
+
+// Vérifier le statut de l'utilisateur connecté
 const getProfile = async (req, res) => {
     try {
         const user = await Utilisateur.findByPk(req.user.id_utilisateur, {
@@ -82,4 +133,21 @@ const getProfile = async (req, res) => {
     }
 };
 
-module.exports = { register, login, getProfile };
+// Déconnexion
+const logout = (req, res) => {
+    req.logout((err) => {
+        if (err) {
+        return res.status(500).json({ message: err.message });
+        }
+        res.json({ message: 'Déconnexion réussie' });
+    });
+};
+
+module.exports = { 
+    register, 
+    login, 
+    // googleAuth, 
+    // googleCallback, 
+    getProfile,
+    logout
+};

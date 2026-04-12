@@ -15,10 +15,13 @@ module.exports = {
     // JWT
     JWT_SECRET: process.env.JWT_SECRET || 'votre_secret_key_ici',
     JWT_EXPIRE: process.env.JWT_EXPIRE || '7d',
-    
-    // Email (optionnel)
-    EMAIL_HOST: process.env.EMAIL_HOST,
-    EMAIL_PORT: process.env.EMAIL_PORT,
-    EMAIL_USER: process.env.EMAIL_USER,
-    EMAIL_PASS: process.env.EMAIL_PASS,
+
+    // Google Auth
+    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+    GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL,
+
+    // Session
+    SESSION_SECRET: process.env.SESSION_SECRET
+
 };

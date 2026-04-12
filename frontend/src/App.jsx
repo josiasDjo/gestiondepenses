@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Navbar from './components/common/Navbar';
+import OAuthCallback from './pages/OAuthCallback';
 
 // Route protection
 const PrivateRoute = ({ children }) => {
@@ -32,6 +33,7 @@ function App() {
             </PrivateRoute>
           }
         />
+        <Route path="/oauth-callback" element={<OAuthCallback />} />
       </Routes>
     </>
   );

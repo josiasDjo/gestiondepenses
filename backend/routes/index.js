@@ -19,7 +19,7 @@ router.use('/transactions', transactionRoutes);
 router.use('/comptes', compteRoutes);
 router.use('/rapports', rapportRoutes);
 router.use('/categories', categorieRoutes);
-router.use('/alertes', alerteRoutes);
+// router.use('/alertes', alerteRoutes);
 router.use('/budgets', budgetRoutes);
 router.use('/devises', deviseRoutes);
 router.use('/menages', menageRoutes);

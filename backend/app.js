@@ -10,16 +10,30 @@ dotenv.config();
 const routes = require('./routes');
 const errorHandler = require('./middlewares/errorHandler');
 const sequelize = require('./config/database');
+const sessionMiddleware = require('./config/session');
+const { PORT } = require('./config/env');
+require('./config/passport'); // Initialiser Passport
 
 const app = express();
-
-// Middlewares
+const port = process.env.PORT
+// Middlewares de base
 app.use(helmet());
-app.use(cors());
+const corsOption = {
+  origin: ['http://localhost:5173', 'http://localhost:5174'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
+app.use(cors(corsOption));
+// Session (nécessaire pour OAuth)
+app.use(sessionMiddleware);
+
+// Passport
 app.use(passport.initialize());
+app.use(passport.session());
 
 // Routes
 app.use('/api', routes);
@@ -32,22 +46,14 @@ app.get('/health', (req, res) => {
 // Error handler
 app.use(errorHandler);
 
-// Synchronisation de la base de données
-const initDB = async () => {
-  try {
-    await sequelize.authenticate();
-    console.log('✅ Connexion à la base de données réussie');
-    
-    // Synchroniser les modèles (à utiliser en développement uniquement)
-    if (process.env.NODE_ENV === 'development') {
-      await sequelize.sync({ alter: true });
-      console.log('✅ Modèles synchronisés');
-    }
-  } catch (error) {
-    console.error('❌ Erreur de connexion à la base de données:', error);
-  }
-};
+app.listen(port,() => {
+  console.log(`✅ App is listening on port ${port}`)
+})
 
-initDB();
+// Synchronisation avec MySQL
+sequelize.sync({ force: false })
+    .then(() => console.log('✅ Base de données synchronisée avec Sequelize !'))
+    .catch(err => console.error('❌ Erreur de synchronisation de la BDD :', err));
+
 
 module.exports = app;
