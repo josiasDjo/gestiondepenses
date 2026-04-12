@@ -1,41 +1,53 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const passport = require('passport');
+const dotenv = require('dotenv');
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
+dotenv.config();
 
-var app = express();
+const routes = require('./routes');
+const errorHandler = require('./middlewares/errorHandler');
+const sequelize = require('./config/database');
 
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
+const app = express();
 
-app.use(logger('dev'));
+// Middlewares
+app.use(helmet());
+app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.urlencoded({ extended: true }));
+app.use(morgan('dev'));
+app.use(passport.initialize());
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+// Routes
+app.use('/api', routes);
 
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date() });
 });
 
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+// Error handler
+app.use(errorHandler);
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
-});
+// Synchronisation de la base de données
+const initDB = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('✅ Connexion à la base de données réussie');
+    
+    // Synchroniser les modèles (à utiliser en développement uniquement)
+    if (process.env.NODE_ENV === 'development') {
+      await sequelize.sync({ alter: true });
+      console.log('✅ Modèles synchronisés');
+    }
+  } catch (error) {
+    console.error('❌ Erreur de connexion à la base de données:', error);
+  }
+};
+
+initDB();
 
 module.exports = app;
