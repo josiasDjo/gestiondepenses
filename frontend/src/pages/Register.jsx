@@ -87,7 +87,7 @@ const Register = () => {
                   value={formData.nom_utilisateur}
                   onChange={handleChange}
                   className="input-field pl-10"
-                  placeholder="Jean Dupont"
+                  placeholder="Votre nom"
                 />
               </div>
             </div>
