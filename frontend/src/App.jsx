@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Navbar from './components/common/Navbar';
+import Comptes from './pages/Account';
 import OAuthCallback from './pages/OAuthCallback';
 
 // Route protection
@@ -29,6 +30,7 @@ function App() {
               <>
                 <Navbar />
                 <Dashboard />
+                {/* <Comptes /> */}
               </>
             </PrivateRoute>
           }

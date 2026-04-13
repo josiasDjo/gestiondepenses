@@ -1,22 +1,9 @@
 module.exports = (sequelize, DataTypes) => {
     const Devise = sequelize.define('Devise', {
-        id_devise: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
-        },
-        code_devise: {
-        type: DataTypes.STRING(5),
-        allowNull: false
-        },
-        nom_devise: {
-        type: DataTypes.STRING(50),
-        allowNull: true
-        },
-        taux_exchange: {
-        type: DataTypes.DECIMAL(15, 4),
-        allowNull: true
-        }
+        id_devise: {type: DataTypes.INTEGER,primaryKey: true,autoIncrement: true},
+        code_devise: {type: DataTypes.STRING(5),allowNull: false},
+        nom_devise: {type: DataTypes.STRING(50),allowNull: true},
+        taux_exchange: {type: DataTypes.DECIMAL(15, 4),allowNull: true}
     }, {
         tableName: 'devises',
         timestamps: false

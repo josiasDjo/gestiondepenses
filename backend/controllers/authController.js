@@ -87,12 +87,6 @@ const login = async (req, res) => {
       return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
     }
 
-    // if (mot_de_passe != user.mot_de_passe) {
-    //   console.log('❌ Mot de passe incorrect');
-    //   console.log(`"${mot_de_passe}" !== "${user.mot_de_passe}"`);
-    //   console.log('Erreur : Email ou mot de passe incorrect')
-    //   return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
-    // }
     
     const token = genererToken(user.id_utilisateur);
     

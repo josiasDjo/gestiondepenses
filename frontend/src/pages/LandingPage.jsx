@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FiTrendingUp, FiShield, FiUsers, FiArrowRight, FiCheckCircle, FiBarChart2, FaFacebook, FaTwitter, FaInstagram, FaLinkedin} from 'react-icons/fi';
+import { FiTrendingUp, FiShield, FiUsers, FiArrowRight, FiCheckCircle, FiBarChart2 } from 'react-icons/fi';
+import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
 
 const LandingPage = () => {
   const features = [

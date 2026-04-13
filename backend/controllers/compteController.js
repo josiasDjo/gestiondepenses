@@ -1,95 +1,255 @@
-const { Compte, Transaction, Devise } = require('../models');
+const { Compte, Transaction, Devise, Menage, MembresMenage } = require('../models');
+const { Op } = require('sequelize');
 
-// Créer un compte
+/**
+ * Récupérer les ménages de l'utilisateur
+ */
+const getMenagesByUser = async (userId) => {
+  const membresMenages = await MembresMenage.findAll({
+    where: { id_utilisateur: userId },
+    attributes: ['id_menage']
+  });
+  return membresMenages.map(m => m.id_menage);
+};
+
+/**
+ * Créer un nouveau compte
+ */
 const createCompte = async (req, res) => {
   try {
-    const compte = await Compte.create(req.body);
-    res.status(201).json(compte);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// Obtenir tous les comptes d'un ménage
-const getComptesByMenage = async (req, res) => {
-  try {
-    const { id_menage } = req.params;
-    const comptes = await Compte.findAll({
-      where: { id_menage },
-      include: ['devise', 'transactions']
+    const { nom_compte, type_compte, solde_initial, id_devise, id_menage } = req.body;
+    const userId = req.user.id_utilisateur;
+    
+    // Vérifier que l'utilisateur est membre de ce ménage
+    const menageIds = await getMenagesByUser(userId);
+    if (!menageIds.includes(parseInt(id_menage))) {
+      return res.status(403).json({ message: 'Vous n\'êtes pas membre de ce ménage' });
+    }
+    
+    const compte = await Compte.create({
+      nom_compte,
+      type_compte,
+      solde: solde_initial || 0,
+      id_devise: id_devise || null,
+      id_menage: id_menage
     });
-    res.json(comptes);
+    
+    res.status(201).json({
+      success: true,
+      message: 'Compte créé avec succès',
+      compte
+    });
   } catch (error) {
+    console.error('Erreur création compte:', error);
     res.status(500).json({ message: error.message });
   }
 };
 
-// Obtenir un compte par ID
+/**
+ * Récupérer tous les comptes de l'utilisateur (via ses ménages)
+ */
+const getMesComptes = async (req, res) => {
+  try {
+    const userId = req.user.id_utilisateur;
+    
+    const menageIds = await getMenagesByUser(userId);
+    
+    if (menageIds.length === 0) {
+      return res.json([]);
+    }
+    
+    const comptes = await Compte.findAll({
+      where: { id_menage: { [Op.in]: menageIds } },
+      include: [
+        { 
+          model: Devise, 
+          as: 'devise',
+          attributes: ['code_devise', 'nom_devise']
+        },
+        {
+          model: Menage,
+          as: 'menage',
+          attributes: ['id_menage', 'nom_menage']
+        }
+      ],
+      order: [['created_at', 'DESC']]
+    });
+    
+    // Calculer les statistiques pour chaque compte
+    const comptesAvecStats = await Promise.all(comptes.map(async (compte) => {
+      const dernieresTransactions = await Transaction.findAll({
+        where: { id_compte: compte.id_compte },
+        order: [['date_transaction', 'DESC']],
+        limit: 5
+      });
+      
+      const debutMois = new Date();
+      debutMois.setDate(1);
+      debutMois.setHours(0, 0, 0, 0);
+      
+      const revenusMois = await Transaction.sum('montant', {
+        where: {
+          id_compte: compte.id_compte,
+          type_flux: 'Revenu',
+          date_transaction: { [Op.gte]: debutMois }
+        }
+      });
+      
+      const depensesMois = await Transaction.sum('montant', {
+        where: {
+          id_compte: compte.id_compte,
+          type_flux: 'Depense',
+          date_transaction: { [Op.gte]: debutMois }
+        }
+      });
+      
+      return {
+        ...compte.toJSON(),
+        revenus_mois: revenusMois || 0,
+        depenses_mois: depensesMois || 0,
+        dernieres_transactions: dernieresTransactions
+      };
+    }));
+    
+    res.json(comptesAvecStats);
+  } catch (error) {
+    console.error('Erreur récupération comptes:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * Récupérer un compte par son ID
+ */
 const getCompteById = async (req, res) => {
   try {
-    const { id_compte } = req.params;
-    const compte = await Compte.findByPk(id_compte, {
-      include: ['devise', 'transactions']
+    const { id } = req.params;
+    const userId = req.user.id_utilisateur;
+    
+    const menageIds = await getMenagesByUser(userId);
+    
+    const compte = await Compte.findOne({
+      where: { 
+        id_compte: id,
+        id_menage: { [Op.in]: menageIds }
+      },
+      include: [
+        { model: Devise, as: 'devise' },
+        { model: Menage, as: 'menage' }
+      ]
     });
     
     if (!compte) {
       return res.status(404).json({ message: 'Compte non trouvé' });
     }
     
-    res.json(compte);
+    const transactions = await Transaction.findAll({
+      where: { id_compte: id },
+      order: [['date_transaction', 'DESC']],
+      limit: 20
+    });
+    
+    res.json({ compte, transactions });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Mettre à jour un compte
+/**
+ * Mettre à jour un compte
+ */
 const updateCompte = async (req, res) => {
   try {
-    const { id_compte } = req.params;
-    const compte = await Compte.findByPk(id_compte);
+    const { id } = req.params;
+    const { nom_compte, type_compte } = req.body;
+    const userId = req.user.id_utilisateur;
+    
+    const menageIds = await getMenagesByUser(userId);
+    
+    const compte = await Compte.findOne({
+      where: { 
+        id_compte: id,
+        id_menage: { [Op.in]: menageIds }
+      }
+    });
     
     if (!compte) {
       return res.status(404).json({ message: 'Compte non trouvé' });
     }
     
-    await compte.update(req.body);
-    res.json(compte);
+    await compte.update({
+      nom_compte: nom_compte || compte.nom_compte,
+      type_compte: type_compte || compte.type_compte
+    });
+    
+    res.json({ success: true, message: 'Compte mis à jour', compte });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Supprimer un compte
+/**
+ * Supprimer un compte
+ */
 const deleteCompte = async (req, res) => {
   try {
-    const { id_compte } = req.params;
-    const compte = await Compte.findByPk(id_compte);
+    const { id } = req.params;
+    const userId = req.user.id_utilisateur;
+    
+    const menageIds = await getMenagesByUser(userId);
+    
+    const compte = await Compte.findOne({
+      where: { 
+        id_compte: id,
+        id_menage: { [Op.in]: menageIds }
+      }
+    });
     
     if (!compte) {
       return res.status(404).json({ message: 'Compte non trouvé' });
+    }
+    
+    const transactionCount = await Transaction.count({
+      where: { id_compte: id }
+    });
+    
+    if (transactionCount > 0) {
+      return res.status(400).json({ 
+        message: 'Impossible de supprimer ce compte car il contient des transactions' 
+      });
     }
     
     await compte.destroy();
-    res.json({ message: 'Compte supprimé' });
+    res.json({ success: true, message: 'Compte supprimé' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Solde total des comptes d'un ménage
+/**
+ * Résumé des comptes
+ */
 const getSoldeTotal = async (req, res) => {
   try {
-    const { id_menage } = req.params;
+    const userId = req.user.id_utilisateur;
+    
+    const menageIds = await getMenagesByUser(userId);
+    
+    if (menageIds.length === 0) {
+      return res.json({ solde_total: 0, comptes: [], nombre_comptes: 0 });
+    }
+    
     const comptes = await Compte.findAll({
-      where: { id_menage },
-      attributes: ['id_compte', 'nom_compte', 'solde']
+      where: { id_menage: { [Op.in]: menageIds } },
+      attributes: ['id_compte', 'nom_compte', 'solde', 'type_compte']
     });
     
     const soldeTotal = comptes.reduce((total, compte) => total + parseFloat(compte.solde), 0);
     
     res.json({
       solde_total: soldeTotal,
-      comptes
+      comptes,
+      nombre_comptes: comptes.length
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -97,10 +257,11 @@ const getSoldeTotal = async (req, res) => {
 };
 
 module.exports = {
-    createCompte,
-    getComptesByMenage,
-    getCompteById,
-    updateCompte,
-    deleteCompte,
-    getSoldeTotal
+  createCompte,
+  getMesComptes,
+  getCompteById,
+  updateCompte,
+  deleteCompte,
+  getSoldeTotal,
+  getMenagesByUser
 };
