@@ -4,7 +4,7 @@ const dashboardController = require('../controllers/dashboardController');
 const { protect } = require('../middlewares/authMiddleware');
 
 // Toutes les routes du dashboard nécessitent une authentification
-router.use(protect);
+// router.use(protect);
 
 // Route principale des statistiques
 router.get('/stats', dashboardController.getDashboardStats);

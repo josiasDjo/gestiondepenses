@@ -1,11 +1,16 @@
-const { Transaction, Compte, Menage, MembresMenage, sequelize } = require('../models');
+const { sequelize } = require('../models/index');
+const Transaction = require('../models/Transaction')
+const Compte = require('../models/Compte')
+const MembresMenage = require('../models/Membres_menage')
+const Menage = require('../models/Menage')
 const { Op } = require('sequelize');
-
+const { getUserFromToken } = require('../utils/auth')
 /**
  * Récupérer les comptes de l'utilisateur via ses ménages
  */
 const getComptesByUser = async (userId) => {
   // Récupérer tous les ménages dont l'utilisateur est membre
+  console.log('Utilisateur getComptesByUser : ', userId)
   const membresMenages = await MembresMenage.findAll({
     where: { id_utilisateur: userId },
     attributes: ['id_menage']
@@ -28,7 +33,16 @@ const getComptesByUser = async (userId) => {
  */
 const getDashboardStats = async (req, res) => {
   try {
-    const userId = req.user.id_utilisateur;
+
+    // Récupérer l'utilisateur à partir du token
+    const user = await getUserFromToken(req);
+    
+    if (!user) {
+      return res.status(401).json({ message: 'Non authentifié' });
+    }
+    
+    const userId = user.id_utilisateur;
+    console.log('Utilisateur : ', userId)
     
     console.log('=== DASHBOARD STATS ===');
     console.log('Utilisateur ID:', userId);
@@ -97,19 +111,19 @@ const getDashboardStats = async (req, res) => {
       const evolution = await getEvolutionData(compteIds);
       
       // Dépenses par catégorie
-      const depensesParCategorie = await Transaction.findAll({
-        attributes: [
-          'categorie',
-          [sequelize.fn('SUM', sequelize.col('montant')), 'total']
-        ],
-        where: {
-          id_compte: { [Op.in]: compteIds },
-          type_flux: 'Depense',
-          date_transaction: { [Op.between]: [debutMois, finMois] }
-        },
-        group: ['categorie'],
-        raw: true
-      });
+      // const depensesParCategorie = await Transaction.findAll({
+      //   attributes: [
+      //     'categorie',
+      //     [sequelize.fn('SUM', sequelize.col('montant')), 'total']
+      //   ],
+      //   where: {
+      //     id_compte: { [Op.in]: compteIds },
+      //     type_flux: 'Depense',
+      //     date_transaction: { [Op.between]: [debutMois, finMois] }
+      //   },
+      //   group: ['categorie'],
+      //   raw: true
+      // });
       
       res.json({
         totalBalance,
@@ -117,7 +131,8 @@ const getDashboardStats = async (req, res) => {
         totalExpense,
         recentTransactions: formattedTransactions,
         evolution,
-        depensesParCategorie: depensesParCategorie.filter(d => d.categorie)
+        // depensesParCategorie: depensesParCategorie.filter(d => d.categorie)
+        depensesParCategorie: []
       });
       
     } else {

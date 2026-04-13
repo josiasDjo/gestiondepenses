@@ -4,6 +4,7 @@ const Transaction = require('../models/Transaction')
 const Devise = require('../models/Devise')
 const Menage = require('../models/Menage')
 const MembresMenage = require('../models/Membres_menage')
+const { getUserFromToken } = require('../utils/auth')
 
 const { Op } = require('sequelize');
 
@@ -23,8 +24,17 @@ const getMenagesByUser = async (userId) => {
  */
 const createCompte = async (req, res) => {
   try {
-    const { nom_compte, type_compte, solde_initial, id_devise, id_menage } = req.body;
-    const userId = req.user.id_utilisateur;
+    // Récupérer l'utilisateur à partir du token
+    const user = await getUserFromToken(req);
+    
+    if (!user) {
+      return res.status(401).json({ message: 'Non authentifié' });
+    }
+    
+    const userId = user.id_utilisateur;
+
+    const { nom_compte, type_compte, solde_initial, id_devise } = req.body;
+    const id_menage = 12
     
     // Vérifier que l'utilisateur est membre de ce ménage
     const menageIds = await getMenagesByUser(userId);
@@ -56,8 +66,15 @@ const createCompte = async (req, res) => {
  */
 const getMesComptes = async (req, res) => {
   try {
-    const userId = req.user.id_utilisateur;
-    console.log('Utilisateur : ', id_utilisateur)
+    // Récupérer l'utilisateur à partir du token
+    const user = await getUserFromToken(req);
+    
+    if (!user) {
+      return res.status(401).json({ message: 'Non authentifié' });
+    }
+    
+    const userId = user.id_utilisateur;
+
     const menageIds = await getMenagesByUser(userId);
     
     if (menageIds.length === 0) {
@@ -66,18 +83,6 @@ const getMesComptes = async (req, res) => {
     
     const comptes = await Compte.findAll({
       where: { id_menage: { [Op.in]: menageIds } },
-      include: [
-        { 
-          model: Devise, 
-          as: 'devise',
-          attributes: ['code_devise', 'nom_devise']
-        },
-        {
-          model: Menage,
-          as: 'menage',
-          attributes: ['id_menage', 'nom_menage']
-        }
-      ],
       order: [['created_at', 'DESC']]
     });
     
@@ -129,8 +134,17 @@ const getMesComptes = async (req, res) => {
  */
 const getCompteById = async (req, res) => {
   try {
+    // Récupérer l'utilisateur à partir du token
+    const user = await getUserFromToken(req);
+    
+    if (!user) {
+      return res.status(401).json({ message: 'Non authentifié' });
+    }
+    
+    const userId = user.id_utilisateur;
+    console.log('Utilisateur ID:', userId);
+
     const { id } = req.params;
-    const userId = req.user.id_utilisateur;
     
     const menageIds = await getMenagesByUser(userId);
     

@@ -12,7 +12,8 @@ const Comptes = () => {
     const [formData, setFormData] = useState({
         nom_compte: '',
         type_compte: 'BANK',
-        solde_initial: 0
+        solde_initial: 0,
+        devise: ''
     });
     const navigate = useNavigate();
     useEffect(() => {
@@ -21,9 +22,10 @@ const Comptes = () => {
 
     const fetchComptes = async () => {
         try {
-        // const response = await api.get('/comptes/all');
-        const response = [1,23,89,44]
-        setComptes(response);
+        const response = await api.get('/comptes/all');
+
+        setComptes(response.data);
+        console.log('Data Response : ', response.data)
         } catch (error) {
         toast.error('Erreur lors du chargement des comptes');
         console.error(error);
@@ -38,22 +40,20 @@ const Comptes = () => {
         setFormData({
             nom_compte: compte.nom_compte,
             type_compte: compte.type_compte,
-            solde_initial: compte.solde
+            solde_initial: compte.solde,
         });
         } else {
         setEditingCompte(null);
         setFormData({
             nom_compte: '',
             type_compte: 'BANK',
-            solde_initial: 0
+            solde_initial: 0,
+            devise: ''
         });
         }
         setShowModal(true);
     };
-    const goBack = (e) => {
-        e.preventDefault();
 
-    }
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -64,7 +64,13 @@ const Comptes = () => {
             });
             toast.success('Compte modifié avec succès');
         } else {
-            await api.post('/comptes', formData);
+            await api.post('/comptes/create', {
+                nom_compte: formData.nom_compte, 
+                type_compte: formData.type_compte, 
+                solde_initial: formData.solde_initial, 
+                id_devise: formData.devise, 
+                // id_menage: formData.nom_compte
+            });
             toast.success('Compte créé avec succès');
         }
         setShowModal(false);
@@ -137,21 +143,21 @@ const Comptes = () => {
             </div>
 
             {/* Solde total */}
-            <div className="bg-blue-900 rounded-2xl shadow-lg p-6 mb-8 text-white">
+            {/* <div className="bg-blue-900 rounded-2xl shadow-lg p-6 mb-8 text-white">
             <div className="flex items-center justify-between">
                 <div>
                 <p className="text-white/80 text-sm">Solde total de tous les comptes</p>
                 <p className="text-4xl font-bold mt-2">
-                    {comptes.reduce((total, c) => total + parseFloat(c.solde), 0).toLocaleString()} FCFA
+                    {comptes.reduce((total, c) => total + parseFloat(c.solde), 0).toLocaleString()}
                 </p>
                 </div>
-                {/* <FiDollarSign className="text-5xl text-white/30" /> */}
+                <FiDollarSign className="text-5xl text-white/30" />
             </div>
-            </div>
+            </div> */}
 
             {/* Grille des comptes */}
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {comptes.map((compte) => (
+            {Array.isArray(comptes) && comptes.map((compte) => (
                 <div key={compte.id_compte} className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
                 <div className="p-6">
                     <div className="flex items-center justify-between mb-4">
@@ -180,7 +186,7 @@ const Comptes = () => {
 
                     <div className="border-t border-gray-100 pt-4">
                     <p className="text-2xl font-bold text-gray-900">
-                        {parseFloat(compte.solde).toLocaleString()} FCFA
+                        {parseFloat(compte.solde).toLocaleString()} {compte.id_devise === 1 ? 'FC' : '$' }
                     </p>
                     
                     <div className="grid grid-cols-2 gap-4 mt-4">
@@ -188,14 +194,14 @@ const Comptes = () => {
                         <FiTrendingUp className="inline text-green-500 mb-1" />
                         <p className="text-xs text-gray-500">Revenus (mois)</p>
                         <p className="text-sm font-semibold text-green-600">
-                            {compte.revenus_mois?.toLocaleString() || 0} FCFA
+                            {compte.revenus_mois?.toLocaleString() || 0} 
                         </p>
                         </div>
                         <div className="bg-red-50 rounded-lg p-2 text-center">
                         <FiTrendingDown className="inline text-red-500 mb-1" />
                         <p className="text-xs text-gray-500">Dépenses (mois)</p>
                         <p className="text-sm font-semibold text-red-600">
-                            {compte.depenses_mois?.toLocaleString() || 0} FCFA
+                            {compte.depenses_mois?.toLocaleString() || 0} 
                         </p>
                         </div>
                     </div>
@@ -268,18 +274,32 @@ const Comptes = () => {
                     </div>
 
                     <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Type de compte
-                    </label>
-                    <select
-                        value={formData.type_compte}
-                        onChange={(e) => setFormData({ ...formData, type_compte: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    >
-                        <option value="CASH">Espèces</option>
-                        <option value="BANK">Compte bancaire</option>
-                        <option value="MOBILE_MONEY">Mobile Money</option>
-                    </select>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Type de compte
+                        </label>
+                        <select
+                            value={formData.type_compte}
+                            onChange={(e) => setFormData({ ...formData, type_compte: e.target.value })}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        >
+                            <option value="CASH">Espèces</option>
+                            <option value="BANK">Compte bancaire</option>
+                            <option value="MOBILE_MONEY">Mobile Money</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Devises
+                        </label>
+                        <select
+                            value={formData.devise}
+                            onChange={(e) => setFormData({ ...formData, type_compte: e.target.value })}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        >
+                            <option value="1">1. Francs Congolais</option>
+                            <option value="2">2. Dollars Américains</option>
+                        </select>
                     </div>
 
                     {!editingCompte && (

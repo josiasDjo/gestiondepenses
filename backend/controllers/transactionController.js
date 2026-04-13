@@ -1,13 +1,17 @@
-const { Transaction, Compte, Categorie, sequelize } = require('../models');
+const { sequelize } = require('../models/index');
+const Transaction = require('../models/Transaction')
+// const Categorie = require('../models/')
+const Compte = require('../models/Compte')
 const { Op } = require('sequelize');
+const { getUserFromToken } = require('../utils/auth')
 
 /**
  * Récupérer les comptes de l'utilisateur via ses ménages
  */
-const getComptesByUser = async (userId) => {
-  const { getComptesByUser: getComptes } = require('./compteController');
-  return await getComptes(userId);
-};
+// const getComptesByUser = async (userId) => {
+//   const { getComptesByUser: getMesComptes } = require('./compteController');
+//   return await getMesComptes(userId);
+// };
 
 /**
  * Créer une transaction
@@ -59,7 +63,14 @@ const createTransaction = async (req, res) => {
  */
 const getMesTransactions = async (req, res) => {
   try {
-    const userId = req.user.id_utilisateur;
+    // Récupérer l'utilisateur à partir du token
+    const user = await getUserFromToken(req);
+    
+    if (!user) {
+      return res.status(401).json({ message: 'Non authentifié' });
+    }
+    
+    const userId = user.id_utilisateur;
     const { page = 1, limit = 20, type, categorie, date_debut, date_fin } = req.query;
 
     const comptes = await getComptesByUser(userId);
@@ -129,7 +140,15 @@ const getMesTransactions = async (req, res) => {
  */
 const getTransactionStats = async (req, res) => {
   try {
-    const userId = req.user.id_utilisateur;
+    // Récupérer l'utilisateur à partir du token
+    const user = await getUserFromToken(req);
+    
+    if (!user) {
+      return res.status(401).json({ message: 'Non authentifié' });
+    }
+    
+    const userId = user.id_utilisateur;
+
     const { periode = 'month' } = req.query;
 
     const comptes = await getComptesByUser(userId);

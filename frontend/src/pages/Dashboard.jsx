@@ -24,9 +24,9 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      // const response = await api.get('/dashboard/stats');
-      // setStats(response.data);
-      const response = [32,245,150,12]
+      const response = await api.get('/dashboard/stats');
+      setStats(response.data);
+      // const response = [32,245,150,12]
     } catch (error) {
       console.error('Erreur:', error);
       toast.error('Erreur lors du chargement des données');
@@ -105,7 +105,7 @@ const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-primary-100 text-sm">Solde total</p>
-                <p className="text-3xl font-bold mt-2">{stats.totalBalance.toLocaleString()} FCFA</p>
+                <p className="text-3xl font-bold mt-2">{stats.totalBalance.toLocaleString()} </p>
               </div>
               <FiDollarSign className="text-4xl text-primary-200" />
             </div>
@@ -115,7 +115,7 @@ const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-green-100 text-sm">Total revenus (mois)</p>
-                <p className="text-3xl font-bold mt-2">{stats.totalIncome.toLocaleString()} FCFA</p>
+                <p className="text-3xl font-bold mt-2">{stats.totalIncome.toLocaleString()} </p>
               </div>
               <FiTrendingUp className="text-4xl text-green-200" />
             </div>
@@ -125,7 +125,7 @@ const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-red-100 text-sm">Total dépenses (mois)</p>
-                <p className="text-3xl font-bold mt-2">{stats.totalExpense.toLocaleString()} FCFA</p>
+                <p className="text-3xl font-bold mt-2">{stats.totalExpense.toLocaleString()} </p>
               </div>
               <FiTrendingDown className="text-4xl text-red-200" />
             </div>

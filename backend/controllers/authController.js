@@ -89,7 +89,7 @@ const login = async (req, res) => {
 
     
     const token = genererToken(user.id_utilisateur);
-    
+    req.user = user;
     res.json({
       token,
       user: {

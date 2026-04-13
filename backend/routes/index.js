@@ -12,6 +12,7 @@ const budgetRoutes = require('./budgetRoutes');
 const deviseRoutes = require('./deviseRoutes');
 const menageRoutes = require('./menageRoutes');
 const patrimoineRoutes = require('./patrimoineRoutes');
+const dashboardRoutes = require('./dashboardRoutes')
 
 // Définition des endpoints
 router.use('/auth', authRoutes);
@@ -19,6 +20,7 @@ router.use('/transactions', transactionRoutes);
 router.use('/comptes', compteRoutes);
 router.use('/rapports', rapportRoutes);
 router.use('/categories', categorieRoutes);
+router.use('/dashboard', dashboardRoutes);
 // router.use('/alertes', alerteRoutes);
 router.use('/budgets', budgetRoutes);
 router.use('/devises', deviseRoutes);

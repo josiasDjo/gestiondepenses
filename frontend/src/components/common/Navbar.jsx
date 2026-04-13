@@ -17,7 +17,7 @@ const Navbar = () => {
     { to: '/dashboard', icon: FiHome, label: 'Tableau de bord' },
     { to: '/transactions', icon: FiList, label: 'Transactions' },
     { to: '/accounts', icon: FiCreditCard, label: 'Comptes' },
-    { to: '/reports', icon: FiPieChart, label: 'Rapports' },
+    { to: '/rapport', icon: FiPieChart, label: 'Rapports' },
   ];
 
   return (
