@@ -1,6 +1,8 @@
 const jwt = require('jsonwebtoken');
 const Utilisateur = require('../models/Utilisateur');
 const Menage = require('../models/Menage')
+const MembresMenage = require('../models/Membres_menage')
+const membresMenageController = require('./membresMenageController')
 const config = require('../config/env');
 const passport = require('passport-google-oauth20')
 const bcrypt = require("bcryptjs");
@@ -32,14 +34,23 @@ const register = async (req, res) => {
       provider: 'local'
     });
     
-    // Créer un ménage par défaut
+    // Associer l'utilisateur au ménage
+    console.log('Utilisateur créé avec ID:', user.id_utilisateur);
+    
+    // Créer le ménage
     const menage = await Menage.create({ 
       nom_menage: `Ménage de ${nom}` 
     });
     
-    // Associer l'utilisateur au ménage
-    await user.addMenage(menage);
+    console.log('Ménage créé avec ID:', menage.id_menage);
     
+    // Créer l'association via le contrôleur
+    const association = await membresMenageController.creerAssociation(
+      user.id_utilisateur,
+      menage.id_menage,
+      'admin'
+    );
+    console.log('✅ Association créée:', association);
     const token = genererToken(user.id_utilisateur);
     
     res.status(201).json({
@@ -60,6 +71,7 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await Utilisateur.findOne({ where: { email } });
+    console.log('Utilisateur trouvé:', user ? user.email : 'NON TROUVÉ');
     if (!user) {
       return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
     }
@@ -70,9 +82,20 @@ const login = async (req, res) => {
         message: 'Ce compte utilise Google. Veuillez vous connecter avec Google.' 
       });
     }
-    const saltRounds = 10;
+
+    console.log('Hash stocké (début):', user.mot_de_passe ? user.mot_de_passe.substring(0, 20) + '...' : 'NULL');
+    console.log('Provider:', user.provider);
 
     const isPasswordValid = await bcrypt.compare(password, user.mot_de_passe);
+    console.log('Résultat bcrypt.compare:', isPasswordValid);
+
+    // Rehacher le mot de passe pour tester 
+    const saltRounds = 10;
+    const testHash = await bcrypt.hash(mot_de_passe, saltRounds);
+    console.log('Rehash du mot de passe saisi:', testHash);
+    console.log('Hash stocké:', user.mot_de_passe);
+    console.log('IDENTIQUES ?', testHash === user.mot_de_passe);
+
     if (!isPasswordValid) {
       console.log('Erreur : Email ou mot de passe incorrect')
       return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
