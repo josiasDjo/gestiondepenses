@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from "react-router-dom";
 import { FiPlus, FiEdit2, FiTrash2, FiEye, FiCreditCard, FiDollarSign, FiTrendingUp, FiTrendingDown, FiX } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import api from '../services/api';
@@ -13,15 +14,16 @@ const Comptes = () => {
         type_compte: 'BANK',
         solde_initial: 0
     });
-
+    const navigate = useNavigate();
     useEffect(() => {
         fetchComptes();
     }, []);
 
     const fetchComptes = async () => {
         try {
-        const response = await api.get('/comptes');
-        setComptes(response.data);
+        // const response = await api.get('/comptes/all');
+        const response = [1,23,89,44]
+        setComptes(response);
         } catch (error) {
         toast.error('Erreur lors du chargement des comptes');
         console.error(error);
@@ -48,7 +50,10 @@ const Comptes = () => {
         }
         setShowModal(true);
     };
+    const goBack = (e) => {
+        e.preventDefault();
 
+    }
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -110,22 +115,29 @@ const Comptes = () => {
     return (
         <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
             {/* Header */}
             <div className="flex justify-between items-center mb-8">
-            <div>
-                <h1 className="text-3xl font-bold text-gray-900">Mes comptes</h1>
-                <p className="text-gray-600 mt-2">Gérez tous vos comptes bancaires et portefeuilles</p>
-            </div>
-            <button
-                onClick={() => handleOpenModal()}
-                className="bg-primary-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary-600 transition-colors"
-            >
-                <FiPlus /> Nouveau compte
-            </button>
+                <button
+                    onClick={() => navigate(-1)}
+                    className="bg-white cursor-pointer text-blue-900 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-red-200 hover:text-black transition-colors"
+                >
+                    Retour
+                </button>
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900">Mes comptes</h1>
+                    <p className="text-gray-600 mt-2">Gérez tous vos comptes bancaires et portefeuilles</p>
+                </div>
+                <button
+                    onClick={() => handleOpenModal()}
+                    className="bg-primary-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary-600 transition-colors"
+                >
+                    <FiPlus /> Nouveau compte
+                </button>
             </div>
 
             {/* Solde total */}
-            <div className="bg-gradient-to-r from-primary-500 to-secondary-800 rounded-2xl shadow-lg p-6 mb-8 text-white">
+            <div className="bg-blue-900 rounded-2xl shadow-lg p-6 mb-8 text-white">
             <div className="flex items-center justify-between">
                 <div>
                 <p className="text-white/80 text-sm">Solde total de tous les comptes</p>
@@ -133,7 +145,7 @@ const Comptes = () => {
                     {comptes.reduce((total, c) => total + parseFloat(c.solde), 0).toLocaleString()} FCFA
                 </p>
                 </div>
-                <FiDollarSign className="text-5xl text-white/30" />
+                {/* <FiDollarSign className="text-5xl text-white/30" /> */}
             </div>
             </div>
 

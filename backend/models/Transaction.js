@@ -1,4 +1,7 @@
-module.exports = (sequelize, DataTypes) => {
+const { DataTypes } = require('sequelize');
+const sequelize = require('./index');
+
+// module.exports = (sequelize, DataTypes) => {
     const Transaction = sequelize.define('Transaction', {
         id_transaction: {type: DataTypes.INTEGER,primaryKey: true,autoIncrement: true},
         montant: {type: DataTypes.DECIMAL(15, 2),allowNull: false,validate: {isDecimal: true,min: 0.01}},
@@ -21,5 +24,7 @@ module.exports = (sequelize, DataTypes) => {
         });
     };
 
-    return Transaction;
-};
+//     return Transaction;
+// };
+
+module.exports = Transaction

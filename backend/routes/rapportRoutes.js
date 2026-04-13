@@ -7,6 +7,7 @@ router.use(protect);
 
 router.get('/mensuel', rapportController.getRapportMensuel);
 router.get('/annuel', rapportController.getRapportAnnuel);
+router.get('/categories', rapportController.getRapportParCategorie);
 router.get('/export/csv', rapportController.exportTransactionsCSV);
 
 module.exports = router;

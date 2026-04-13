@@ -1,165 +1,301 @@
-const { Transaction, Compte } = require('../models');
+const { Transaction, Compte, Categorie, sequelize } = require('../models');
+const { Op } = require('sequelize');
 
-// Créer une transaction
+/**
+ * Récupérer les comptes de l'utilisateur via ses ménages
+ */
+const getComptesByUser = async (userId) => {
+  const { getComptesByUser: getComptes } = require('./compteController');
+  return await getComptes(userId);
+};
+
+/**
+ * Créer une transaction
+ */
 const createTransaction = async (req, res) => {
-    try {
-        const transaction = await Transaction.create(req.body);
-        
-        // Mettre à jour le solde du compte
-        const compte = await Compte.findByPk(transaction.id_compte);
-        if (compte) {
-        await compte.mettreAJourSolde(transaction.montant, transaction.type_flux);
-        }
-        
-        res.status(201).json(transaction);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+  try {
+    const { montant, description, type_flux, categorie, date_transaction, id_compte } = req.body;
+    const userId = req.user.id_utilisateur;
+
+    // Vérifier que le compte appartient à l'utilisateur
+    const comptes = await getComptesByUser(userId);
+    const compteIds = comptes.map(c => c.id_compte);
+    
+    if (!compteIds.includes(parseInt(id_compte))) {
+      return res.status(403).json({ message: 'Accès non autorisé à ce compte' });
     }
+
+    const transaction = await Transaction.create({
+      montant,
+      description,
+      type_flux,
+      categorie: categorie || 'Non catégorisé',
+      date_transaction: date_transaction || new Date(),
+      id_compte
+    });
+
+    // Mettre à jour le solde du compte
+    const compte = await Compte.findByPk(id_compte);
+    if (compte) {
+      const nouveauSolde = type_flux === 'Revenu' 
+        ? parseFloat(compte.solde) + parseFloat(montant)
+        : parseFloat(compte.solde) - parseFloat(montant);
+      await compte.update({ solde: nouveauSolde });
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Transaction ajoutée avec succès',
+      transaction
+    });
+  } catch (error) {
+    console.error('Erreur création transaction:', error);
+    res.status(500).json({ message: error.message });
+  }
 };
 
-// Obtenir toutes les transactions d'un compte
-const getTransactionsByCompte = async (req, res) => {
-    try {
-        const { id_compte } = req.params;
-        const transactions = await Transaction.findAll({
-        where: { id_compte },
-        order: [['date_transaction', 'DESC']]
-        });
-        res.json(transactions);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+/**
+ * Récupérer toutes les transactions de l'utilisateur
+ */
+const getMesTransactions = async (req, res) => {
+  try {
+    const userId = req.user.id_utilisateur;
+    const { page = 1, limit = 20, type, categorie, date_debut, date_fin } = req.query;
+
+    const comptes = await getComptesByUser(userId);
+    const compteIds = comptes.map(c => c.id_compte);
+
+    if (compteIds.length === 0) {
+      return res.json({ transactions: [], total: 0, page: 1, totalPages: 0 });
     }
+
+    // Construire les filtres
+    const where = { id_compte: { [Op.in]: compteIds } };
+    
+    if (type && type !== 'all') {
+      where.type_flux = type === 'income' ? 'Revenu' : 'Depense';
+    }
+    
+    if (categorie && categorie !== 'all') {
+      where.categorie = categorie;
+    }
+    
+    if (date_debut && date_fin) {
+      where.date_transaction = {
+        [Op.between]: [new Date(date_debut), new Date(date_fin)]
+      };
+    }
+
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+
+    const { count, rows } = await Transaction.findAndCountAll({
+      where,
+      include: [
+        {
+          model: Compte,
+          as: 'compte',
+          attributes: ['id_compte', 'nom_compte', 'type_compte']
+        }
+      ],
+      order: [['date_transaction', 'DESC']],
+      limit: parseInt(limit),
+      offset
+    });
+
+    const transactions = rows.map(transaction => ({
+      id: transaction.id_transaction,
+      montant: parseFloat(transaction.montant),
+      date: transaction.date_transaction,
+      description: transaction.description || '',
+      categorie: transaction.categorie,
+      type: transaction.type_flux === 'Revenu' ? 'income' : 'expense',
+      compte: transaction.compte
+    }));
+
+    res.json({
+      transactions,
+      total: count,
+      page: parseInt(page),
+      totalPages: Math.ceil(count / parseInt(limit))
+    });
+  } catch (error) {
+    console.error('Erreur récupération transactions:', error);
+    res.status(500).json({ message: error.message });
+  }
 };
 
-// Obtenir les transactions par période
-const getTransactionsByPeriode = async (req, res) => {
-    try {
-        const { date_debut, date_fin, id_compte } = req.query;
-        const where = {};
-        
-        if (date_debut && date_fin) {
-        where.date_transaction = {
-            [Op.between]: [date_debut, date_fin]
-        };
-        }
-        
-        if (id_compte) {
-        where.id_compte = id_compte;
-        }
-        
-        const transactions = await Transaction.findAll({ where });
-        res.json(transactions);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+/**
+ * Récupérer les statistiques des transactions
+ */
+const getTransactionStats = async (req, res) => {
+  try {
+    const userId = req.user.id_utilisateur;
+    const { periode = 'month' } = req.query;
+
+    const comptes = await getComptesByUser(userId);
+    const compteIds = comptes.map(c => c.id_compte);
+
+    if (compteIds.length === 0) {
+      return res.json({ revenus: 0, depenses: 0, solde: 0, categories: [] });
     }
+
+    let dateCondition = {};
+    const maintenant = new Date();
+
+    if (periode === 'month') {
+      const debutMois = new Date(maintenant.getFullYear(), maintenant.getMonth(), 1);
+      dateCondition = { date_transaction: { [Op.gte]: debutMois } };
+    } else if (periode === 'year') {
+      const debutAnnee = new Date(maintenant.getFullYear(), 0, 1);
+      dateCondition = { date_transaction: { [Op.gte]: debutAnnee } };
+    }
+
+    const revenus = await Transaction.sum('montant', {
+      where: {
+        id_compte: { [Op.in]: compteIds },
+        type_flux: 'Revenu',
+        ...dateCondition
+      }
+    });
+
+    const depenses = await Transaction.sum('montant', {
+      where: {
+        id_compte: { [Op.in]: compteIds },
+        type_flux: 'Depense',
+        ...dateCondition
+      }
+    });
+
+    const categories = await Transaction.findAll({
+      attributes: [
+        'categorie',
+        [sequelize.fn('SUM', sequelize.col('montant')), 'total']
+      ],
+      where: {
+        id_compte: { [Op.in]: compteIds },
+        type_flux: 'Depense',
+        ...dateCondition
+      },
+      group: ['categorie'],
+      raw: true
+    });
+
+    res.json({
+      revenus: revenus || 0,
+      depenses: depenses || 0,
+      solde: (revenus || 0) - (depenses || 0),
+      categories: categories.filter(c => c.categorie).map(c => ({
+        nom: c.categorie,
+        total: parseFloat(c.total),
+        pourcentage: depenses > 0 ? (parseFloat(c.total) / depenses) * 100 : 0
+      }))
+    });
+  } catch (error) {
+    console.error('Erreur stats transactions:', error);
+    res.status(500).json({ message: error.message });
+  }
 };
 
-// Mettre à jour une transaction
+/**
+ * Mettre à jour une transaction
+ */
 const updateTransaction = async (req, res) => {
-    try {
-        const { id_transaction } = req.params;
-        const transaction = await Transaction.findByPk(id_transaction);
-        
-        if (!transaction) {
-        return res.status(404).json({ message: 'Transaction non trouvée' });
-        }
-        
-        const ancienMontant = transaction.montant;
-        const ancienType = transaction.type_flux;
-        
-        await transaction.update(req.body);
-        
-        // Ajuster le solde du compte
-        const compte = await Compte.findByPk(transaction.id_compte);
-        if (compte && (ancienMontant !== transaction.montant || ancienType !== transaction.type_flux)) {
-        // Annuler l'ancien effet
-        await compte.mettreAJourSolde(ancienMontant, ancienType === 'Revenu' ? 'Depense' : 'Revenu');
-        // Appliquer le nouvel effet
-        await compte.mettreAJourSolde(transaction.montant, transaction.type_flux);
-        }
-        
-        res.json(transaction);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+  try {
+    const { id } = req.params;
+    const { montant, description, categorie, date_transaction } = req.body;
+    const userId = req.user.id_utilisateur;
+
+    const transaction = await Transaction.findByPk(id, {
+      include: [{ model: Compte, as: 'compte' }]
+    });
+
+    if (!transaction) {
+      return res.status(404).json({ message: 'Transaction non trouvée' });
     }
+
+    // Vérifier l'accès
+    const comptes = await getComptesByUser(userId);
+    const compteIds = comptes.map(c => c.id_compte);
+    if (!compteIds.includes(transaction.id_compte)) {
+      return res.status(403).json({ message: 'Accès non autorisé' });
+    }
+
+    const ancienMontant = transaction.montant;
+    const ancienType = transaction.type_flux;
+
+    await transaction.update({
+      montant: montant || transaction.montant,
+      description: description !== undefined ? description : transaction.description,
+      categorie: categorie || transaction.categorie,
+      date_transaction: date_transaction || transaction.date_transaction
+    });
+
+    // Ajuster le solde du compte si nécessaire
+    if (montant && montant !== ancienMontant) {
+      const compte = await Compte.findByPk(transaction.id_compte);
+      if (compte) {
+        let nouveauSolde = parseFloat(compte.solde);
+        if (ancienType === 'Revenu') {
+          nouveauSolde -= ancienMontant;
+          nouveauSolde += parseFloat(montant);
+        } else {
+          nouveauSolde += ancienMontant;
+          nouveauSolde -= parseFloat(montant);
+        }
+        await compte.update({ solde: nouveauSolde });
+      }
+    }
+
+    res.json({ success: true, message: 'Transaction modifiée', transaction });
+  } catch (error) {
+    console.error('Erreur mise à jour transaction:', error);
+    res.status(500).json({ message: error.message });
+  }
 };
 
-// Supprimer une transaction
+/**
+ * Supprimer une transaction
+ */
 const deleteTransaction = async (req, res) => {
-    try {
-        const { id_transaction } = req.params;
-        const transaction = await Transaction.findByPk(id_transaction);
-        
-        if (!transaction) {
-        return res.status(404).json({ message: 'Transaction non trouvée' });
-        }
-        
-        // Annuler l'effet sur le solde du compte
-        const compte = await Compte.findByPk(transaction.id_compte);
-        if (compte) {
-        await compte.mettreAJourSolde(transaction.montant, transaction.type_flux === 'Revenu' ? 'Depense' : 'Revenu');
-        }
-        
-        await transaction.destroy();
-        res.json({ message: 'Transaction supprimée' });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-    };
+  try {
+    const { id } = req.params;
+    const userId = req.user.id_utilisateur;
 
-    // Résumé des transactions
-    const getTransactionSummary = async (req, res) => {
-    try {
-        const { id_compte, periode } = req.query;
-        
-        let dateCondition = {};
-        if (periode === 'month') {
-        dateCondition = {
-            date_transaction: {
-            [Op.gte]: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-            }
-        };
-        } else if (periode === 'year') {
-        dateCondition = {
-            date_transaction: {
-            [Op.gte]: new Date(new Date().getFullYear(), 0, 1)
-            }
-        };
-        }
-        
-        const where = { ...dateCondition };
-        if (id_compte) where.id_compte = id_compte;
-        
-        const revenus = await Transaction.sum('montant', {
-        where: { ...where, type_flux: 'Revenu' }
-        });
-        
-        const depenses = await Transaction.sum('montant', {
-        where: { ...where, type_flux: 'Depense' }
-        });
-        
-        const depensesParCategorie = await Transaction.findAll({
-        attributes: ['categorie', [sequelize.fn('SUM', sequelize.col('montant')), 'total']],
-        where: { ...where, type_flux: 'Depense' },
-        group: ['categorie']
-        });
-        
-        res.json({
-        revenus: revenus || 0,
-        depenses: depenses || 0,
-        solde: (revenus || 0) - (depenses || 0),
-        depensesParCategorie
-        });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    const transaction = await Transaction.findByPk(id);
+
+    if (!transaction) {
+      return res.status(404).json({ message: 'Transaction non trouvée' });
     }
+
+    // Vérifier l'accès
+    const comptes = await getComptesByUser(userId);
+    const compteIds = comptes.map(c => c.id_compte);
+    if (!compteIds.includes(transaction.id_compte)) {
+      return res.status(403).json({ message: 'Accès non autorisé' });
+    }
+
+    // Ajuster le solde du compte
+    const compte = await Compte.findByPk(transaction.id_compte);
+    if (compte) {
+      const nouveauSolde = transaction.type_flux === 'Revenu'
+        ? parseFloat(compte.solde) - parseFloat(transaction.montant)
+        : parseFloat(compte.solde) + parseFloat(transaction.montant);
+      await compte.update({ solde: nouveauSolde });
+    }
+
+    await transaction.destroy();
+
+    res.json({ success: true, message: 'Transaction supprimée' });
+  } catch (error) {
+    console.error('Erreur suppression transaction:', error);
+    res.status(500).json({ message: error.message });
+  }
 };
 
 module.exports = {
-    createTransaction,
-    getTransactionsByCompte,
-    getTransactionsByPeriode,
-    updateTransaction,
-    deleteTransaction,
-    getTransactionSummary
+  createTransaction,
+  getMesTransactions,
+  getTransactionStats,
+  updateTransaction,
+  deleteTransaction
 };

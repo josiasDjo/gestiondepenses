@@ -24,8 +24,9 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const response = await api.get('/dashboard/stats');
-      setStats(response.data);
+      // const response = await api.get('/dashboard/stats');
+      // setStats(response.data);
+      const response = [32,245,150,12]
     } catch (error) {
       console.error('Erreur:', error);
       toast.error('Erreur lors du chargement des données');

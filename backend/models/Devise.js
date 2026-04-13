@@ -1,4 +1,7 @@
-module.exports = (sequelize, DataTypes) => {
+const { DataTypes } = require('sequelize');
+const sequelize = require('./index');
+
+// module.exports = (sequelize, DataTypes) => {
     const Devise = sequelize.define('Devise', {
         id_devise: {type: DataTypes.INTEGER,primaryKey: true,autoIncrement: true},
         code_devise: {type: DataTypes.STRING(5),allowNull: false},
@@ -21,5 +24,7 @@ module.exports = (sequelize, DataTypes) => {
         });
     };
 
-    return Devise;
-};
+//     return Devise;
+// };
+
+module.exports = Devise

@@ -1,4 +1,10 @@
-const { Compte, Transaction, Devise, Menage, MembresMenage } = require('../models');
+// const { Menage, MembresMenage } = require('../models');
+const Compte = require('../models/Compte')
+const Transaction = require('../models/Transaction')
+const Devise = require('../models/Devise')
+const Menage = require('../models/Menage')
+const MembresMenage = require('../models/Membres_menage')
+
 const { Op } = require('sequelize');
 
 /**
@@ -51,7 +57,7 @@ const createCompte = async (req, res) => {
 const getMesComptes = async (req, res) => {
   try {
     const userId = req.user.id_utilisateur;
-    
+    console.log('Utilisateur : ', id_utilisateur)
     const menageIds = await getMenagesByUser(userId);
     
     if (menageIds.length === 0) {

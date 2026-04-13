@@ -1,4 +1,7 @@
-module.exports = (sequelize, DataTypes) => {
+const { DataTypes } = require('sequelize');
+const sequelize = require('./index');
+
+// module.exports = (sequelize, DataTypes) => {
     const Compte = sequelize.define('Compte', {
         id_compte: {type: DataTypes.INTEGER,primaryKey: true,autoIncrement: true},
         nom_compte: {type: DataTypes.STRING(50),allowNull: false},
@@ -39,5 +42,7 @@ module.exports = (sequelize, DataTypes) => {
         return this.solde;
     };
 
-    return Compte;
-};
+    // return Compte;
+// };
+
+module.exports = Compte
