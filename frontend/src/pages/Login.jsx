@@ -26,7 +26,14 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await api.post('/auth/login', formData);
+      const loginData = {
+        email: formData.email,
+        mot_de_passe: formData.password 
+      };
+      
+      console.log('Données envoyées au backend:', loginData);
+
+      const response = await api.post('/auth/login', loginData);
       const { token, user } = response.data;
       
       localStorage.setItem('token', token);

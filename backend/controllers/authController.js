@@ -19,9 +19,6 @@ const register = async (req, res) => {
   try {
     const { nom, email, mot_de_passe } = req.body;
 
-    const saltRounds = 10;
-    const mot_de_passe_hash = await bcrypt.hash(mot_de_passe, saltRounds);
-
     const userExists = await Utilisateur.findOne({ where : { email }})
     if (userExists) {
       return res.status(400).json({ message: 'Cet email est déjà utilisé' });
@@ -30,7 +27,7 @@ const register = async (req, res) => {
     const user = await Utilisateur.create({ 
       nom, 
       email, 
-      mot_de_passe : mot_de_passe_hash,
+      mot_de_passe,
       provider: 'local'
     });
     
@@ -69,7 +66,7 @@ const register = async (req, res) => {
 // Connexion Normale
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, mot_de_passe } = req.body;
     const user = await Utilisateur.findOne({ where: { email } });
     console.log('Utilisateur trouvé:', user ? user.email : 'NON TROUVÉ');
     if (!user) {
@@ -83,32 +80,31 @@ const login = async (req, res) => {
       });
     }
 
-    console.log('Hash stocké (début):', user.mot_de_passe ? user.mot_de_passe.substring(0, 20) + '...' : 'NULL');
-    console.log('Provider:', user.provider);
-
-    const isPasswordValid = await bcrypt.compare(password, user.mot_de_passe);
-    console.log('Résultat bcrypt.compare:', isPasswordValid);
-
-    // Rehacher le mot de passe pour tester 
-    const saltRounds = 10;
-    const testHash = await bcrypt.hash(mot_de_passe, saltRounds);
-    console.log('Rehash du mot de passe saisi:', testHash);
-    console.log('Hash stocké:', user.mot_de_passe);
-    console.log('IDENTIQUES ?', testHash === user.mot_de_passe);
+    const isPasswordValid = await bcrypt.compare(mot_de_passe, user.mot_de_passe);
 
     if (!isPasswordValid) {
       console.log('Erreur : Email ou mot de passe incorrect')
       return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
     }
+
+    // if (mot_de_passe != user.mot_de_passe) {
+    //   console.log('❌ Mot de passe incorrect');
+    //   console.log(`"${mot_de_passe}" !== "${user.mot_de_passe}"`);
+    //   console.log('Erreur : Email ou mot de passe incorrect')
+    //   return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
+    // }
     
     const token = genererToken(user.id_utilisateur);
     
     res.json({
-      id: user.id_utilisateur,
-      nom: user.nom,
-      email: user.email,
-      avatar: user.avatar,
-      token
+      token,
+      user: {
+        id: user.id_utilisateur,
+        nom: user.nom,
+        email: user.email,
+        avatar: user.avatar,
+        provider: user.provider
+      }
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
