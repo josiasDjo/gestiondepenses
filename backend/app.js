@@ -1,41 +1,59 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const passport = require('passport');
+const dotenv = require('dotenv');
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
+dotenv.config();
 
-var app = express();
+const routes = require('./routes');
+const errorHandler = require('./middlewares/errorHandler');
+const sequelize = require('./config/database');
+const sessionMiddleware = require('./config/session');
+const { PORT } = require('./config/env');
+require('./config/passport'); // Initialiser Passport
 
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
-
-app.use(logger('dev'));
+const app = express();
+const port = process.env.PORT
+// Middlewares de base
+app.use(helmet());
+const corsOption = {
+  origin: ['http://localhost:5173', 'http://localhost:5174'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.urlencoded({ extended: true }));
+app.use(morgan('dev'));
+app.use(cors(corsOption));
+// Session (nécessaire pour OAuth)
+app.use(sessionMiddleware);
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+// Passport
+app.use(passport.initialize());
+app.use(passport.session());
 
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
+// Routes
+app.use('/api', routes);
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date() });
 });
 
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+// Error handler
+app.use(errorHandler);
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
-});
+app.listen(port,() => {
+  console.log(`✅ App is listening on port ${port}`)
+})
+
+// Synchronisation avec MySQL
+sequelize.sync({ force: false })
+    .then(() => console.log('✅ Base de données synchronisée avec Sequelize !'))
+    .catch(err => console.error('❌ Erreur de synchronisation de la BDD :', err));
+
 
 module.exports = app;

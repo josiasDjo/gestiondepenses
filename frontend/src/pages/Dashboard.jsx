@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { FiPlus, FiTrendingUp, FiTrendingDown, FiDollarSign, FiCreditCard, FiPieChart } from 'react-icons/fi';
+import { FiPlus, FiTrendingUp, FiTrendingDown, FiDollarSign } from 'react-icons/fi';
 import { Line, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import toast from 'react-hot-toast';
-import axios from 'axios';
+import api from '../services/api';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
 
@@ -13,7 +13,8 @@ const Dashboard = () => {
     totalIncome: 0,
     totalExpense: 0,
     recentTransactions: [],
-    chartData: null
+    depensesParCategorie: [],
+    evolution: { labels: [], revenus: [], depenses: [] }
   });
   const [loading, setLoading] = useState(true);
 
@@ -23,45 +24,46 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/dashboard/stats', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get('/dashboard/stats');
       setStats(response.data);
+      // const response = [32,245,150,12]
     } catch (error) {
+      console.error('Erreur:', error);
       toast.error('Erreur lors du chargement des données');
     } finally {
       setLoading(false);
     }
   };
 
-  // Données d'exemple pour le graphique
+  // Données pour le graphique d'évolution
   const lineChartData = {
-    labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul'],
+    labels: stats.evolution.labels,
     datasets: [
       {
         label: 'Revenus',
-        data: [1200, 1900, 1500, 1700, 2000, 1800, 2200],
-        borderColor: 'rgb(34, 197, 94)',
-        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+        data: stats.evolution.revenus,
+        borderColor: '#10b981',
+        backgroundColor: 'rgba(16, 185, 129, 0.1)',
         tension: 0.4,
       },
       {
         label: 'Dépenses',
-        data: [800, 1100, 900, 1300, 1200, 1400, 1100],
-        borderColor: 'rgb(239, 68, 68)',
+        data: stats.evolution.depenses,
+        borderColor: '#ef4444',
         backgroundColor: 'rgba(239, 68, 68, 0.1)',
         tension: 0.4,
       }
     ]
   };
 
+  // Données pour le graphique en camembert
   const doughnutData = {
-    labels: ['Alimentation', 'Transport', 'Logement', 'Loisirs', 'Santé', 'Autres'],
+    labels: stats.depensesParCategorie.map(c => c.categorie || 'Non catégorisé'),
     datasets: [{
-      data: [35, 20, 25, 10, 5, 5],
+      data: stats.depensesParCategorie.map(c => parseFloat(c.total)),
       backgroundColor: [
-        '#6366f1',
+        '#f58220',
+        '#052846',
         '#10b981',
         '#f59e0b',
         '#ef4444',
@@ -83,7 +85,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="w-16 h-16 border-t-4 border-indigo-600 border-solid rounded-full animate-spin"></div>
+        <div className="w-16 h-16 border-t-4 border-primary-500 border-solid rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -99,31 +101,31 @@ const Dashboard = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="card bg-gradient-to-r from-indigo-500 to-indigo-600 text-white">
+          <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl shadow-lg p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-indigo-100 text-sm">Solde total</p>
-                <p className="text-3xl font-bold mt-2">{stats.totalBalance.toLocaleString()} FCFA</p>
+                <p className="text-primary-100 text-sm">Solde total</p>
+                <p className="text-3xl font-bold mt-2">{stats.totalBalance.toLocaleString()} </p>
               </div>
-              <FiDollarSign className="text-4xl text-indigo-200" />
+              <FiDollarSign className="text-4xl text-primary-200" />
             </div>
           </div>
 
-          <div className="card bg-gradient-to-r from-green-500 to-green-600 text-white">
+          <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-green-100 text-sm">Total revenus</p>
-                <p className="text-3xl font-bold mt-2">{stats.totalIncome.toLocaleString()} FCFA</p>
+                <p className="text-green-100 text-sm">Total revenus (mois)</p>
+                <p className="text-3xl font-bold mt-2">{stats.totalIncome.toLocaleString()} </p>
               </div>
               <FiTrendingUp className="text-4xl text-green-200" />
             </div>
           </div>
 
-          <div className="card bg-gradient-to-r from-red-500 to-red-600 text-white">
+          <div className="bg-gradient-to-r from-red-500 to-red-600 rounded-xl shadow-lg p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-red-100 text-sm">Total dépenses</p>
-                <p className="text-3xl font-bold mt-2">{stats.totalExpense.toLocaleString()} FCFA</p>
+                <p className="text-red-100 text-sm">Total dépenses (mois)</p>
+                <p className="text-3xl font-bold mt-2">{stats.totalExpense.toLocaleString()} </p>
               </div>
               <FiTrendingDown className="text-4xl text-red-200" />
             </div>
@@ -132,60 +134,72 @@ const Dashboard = () => {
 
         {/* Charts Section */}
         <div className="grid lg:grid-cols-2 gap-6 mb-8">
-          <div className="card">
+          <div className="bg-white rounded-xl shadow-lg p-6">
             <h3 className="text-lg font-semibold mb-4">Évolution des finances</h3>
-            <Line data={lineChartData} options={options} />
+            {stats.evolution.labels.length > 0 ? (
+              <Line data={lineChartData} options={options} />
+            ) : (
+              <p className="text-gray-500 text-center py-8">Aucune donnée disponible</p>
+            )}
           </div>
 
-          <div className="card">
+          <div className="bg-white rounded-xl shadow-lg p-6">
             <h3 className="text-lg font-semibold mb-4">Dépenses par catégorie</h3>
-            <div className="w-64 mx-auto">
-              <Doughnut data={doughnutData} options={options} />
-            </div>
+            {stats.depensesParCategorie.length > 0 ? (
+              <div className="w-64 mx-auto">
+                <Doughnut data={doughnutData} options={options} />
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-8">Aucune dépense enregistrée</p>
+            )}
           </div>
         </div>
 
         {/* Recent Transactions */}
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-lg p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Transactions récentes</h3>
-            <button className="btn-primary text-sm flex items-center gap-2">
+            <button className="bg-primary-500 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-primary-600 transition-colors">
               <FiPlus /> Ajouter
             </button>
           </div>
           
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Catégorie</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {stats.recentTransactions.map((transaction, index) => (
-                  <tr key={index} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(transaction.date).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      {transaction.description}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs rounded-full bg-indigo-100 text-indigo-800">
-                        {transaction.category}
-                      </span>
-                    </td>
-                    <td className={`px-6 py-4 whitespace-nowrap text-sm text-right font-medium ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                      {transaction.type === 'income' ? '+' : '-'} {transaction.amount.toLocaleString()} FCFA
-                    </td>
+          {stats.recentTransactions.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Catégorie</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {stats.recentTransactions.map((transaction, index) => (
+                    <tr key={index} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {new Date(transaction.date).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        {transaction.description}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs rounded-full bg-primary-100 text-primary-800">
+                          {transaction.category}
+                        </span>
+                      </td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm text-right font-medium ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                        {transaction.type === 'income' ? '+' : '-'} {transaction.amount.toLocaleString()} FCFA
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-8">Aucune transaction récente</p>
+          )}
         </div>
       </div>
     </div>

@@ -6,6 +6,10 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Navbar from './components/common/Navbar';
+import Comptes from './pages/Account';
+import Rapport from './pages/Rapports';
+import Transaction from './pages/Transaction';
+import OAuthCallback from './pages/OAuthCallback';
 
 // Route protection
 const PrivateRoute = ({ children }) => {
@@ -21,6 +25,9 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/accounts" element={<Comptes />} />
+        <Route path="/transactions" element={<Transaction />} />
+        <Route path="/reports" element={<Rapport />} />
         <Route
           path="/dashboard"
           element={
@@ -32,6 +39,7 @@ function App() {
             </PrivateRoute>
           }
         />
+        <Route path="/oauth-callback" element={<OAuthCallback />} />
       </Routes>
     </>
   );

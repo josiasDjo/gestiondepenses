@@ -17,7 +17,7 @@ const Navbar = () => {
     { to: '/dashboard', icon: FiHome, label: 'Tableau de bord' },
     { to: '/transactions', icon: FiList, label: 'Transactions' },
     { to: '/accounts', icon: FiCreditCard, label: 'Comptes' },
-    { to: '/reports', icon: FiPieChart, label: 'Rapports' },
+    { to: '/rapport', icon: FiPieChart, label: 'Rapports' },
   ];
 
   return (
@@ -26,8 +26,8 @@ const Navbar = () => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg"></div>
-              <span className="font-bold text-xl bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              <div className="w-8 h-8 bg-blue-900 rounded-lg"></div>
+              <span className="font-bold text-xl text-blue-900">
                 Gestion Dépenses
               </span>
             </Link>
@@ -47,7 +47,7 @@ const Navbar = () => {
             ))}
             <div className="border-l pl-4 flex items-center space-x-3">
               <span className="text-sm text-gray-600">
-                <FiUser className="inline mr-1" /> {user.nom_utilisateur || 'Utilisateur'}
+                <FiUser className="inline mr-1" /> {user.nom || 'Utilisateur'}
               </span>
               <button
                 onClick={handleLogout}
