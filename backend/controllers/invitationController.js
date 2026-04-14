@@ -1,6 +1,7 @@
-const { Utilisateur, Menage, MembresMenage, sequelize } = require('../models');
+const { Utilisateur, Menage, MembresMenage, Invitation, sequelize } = require('../models');
 const { Op } = require('sequelize');
 const { getUserFromToken } = require('../utils/auth')
+const crypto = require('crypto');
 
 // Envoyer une invitation
 const envoyerInvitation = async (req, res) => {
@@ -17,7 +18,6 @@ const envoyerInvitation = async (req, res) => {
         if (!estAdmin) {
         return res.status(403).json({ message: 'Seul un admin peut inviter des membres' });
         }
-        
         // Vérifier si l'utilisateur existe
         const invite = await Utilisateur.findOne({ where: { email } });
         
@@ -34,21 +34,28 @@ const envoyerInvitation = async (req, res) => {
         return res.status(400).json({ message: 'Cet utilisateur est déjà membre du ménage' });
         }
         
-        // Créer l'invitation (table invitations à créer)
+        const tokenGenerer = () => {
+            const timestamp = Date.now().toString(36);
+            const random = crypto.randomBytes(77).toString('hex');
+            const token = timestamp + random;
+            return token.substring(0, 190);
+        };
+        const token = tokenGenerer()
+        // Créer l'invitation
         const invitation = await Invitation.create({
-        id_menage,
-        email_invite: email,
-        id_expediteur: user.id_utilisateur,
-        role: role || 'member',
-        statut: 'en_attente',
-        date_expiration: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 jours
+            id_menage,
+            email_invite: email,
+            id_expediteur: user.id_utilisateur,
+            token: token,
+            role: role || 'member',
+            statut: 'en_attente',
+            date_expiration: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) 
         });
         
-        // Envoyer un email (optionnel)
-        // await sendInvitationEmail(email, menage.nom_menage);
         
         res.json({ success: true, message: 'Invitation envoyée', invitation });
     } catch (error) {
+        console.log('Error : ', error)
         res.status(500).json({ message: error.message });
     }
 };

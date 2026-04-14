@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { FiX, FiMail, FiSend } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
+import { useMenage } from '../../context/MenageContext';
 
 const InvitationModal = ({ menageId, menageNom, onClose }) => {
+    const { menageActif } = useMenage();
     const [email, setEmail] = useState('');
     const [role, setRole] = useState('member');
     const [loading, setLoading] = useState(false);
@@ -19,7 +21,7 @@ const InvitationModal = ({ menageId, menageNom, onClose }) => {
         try {
         await api.post('/invitations/envoyerInvitation', {
             email,
-            id_menage: menageId,
+            id_menage:  menageActif.id_menage,
             role
         });
         toast.success(`Invitation envoyée à ${email}`);
