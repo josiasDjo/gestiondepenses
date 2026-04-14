@@ -11,6 +11,7 @@ import Rapport from './pages/Rapports';
 import Transaction from './pages/Transaction';
 import OAuthCallback from './pages/OAuthCallback';
 import { MenageProvider } from './context/MenageContext';
+import AccepterInvitation  from './pages/AccepterInvitation';
 
 // Route protection
 const PrivateRoute = ({ children }) => {
@@ -73,6 +74,7 @@ function App() {
             </PrivateRoute>
           }
         />
+        <Route path="/invitations/accepter/:token" element={<AccepterInvitation />} />
       </Routes>
     </MenageProvider>
   );

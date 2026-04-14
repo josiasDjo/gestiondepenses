@@ -12,7 +12,7 @@ const deviseRoutes = require('./deviseRoutes');
 const menageRoutes = require('./menageRoutes');
 const patrimoineRoutes = require('./patrimoineRoutes');
 const dashboardRoutes = require('./dashboardRoutes')
-const invitationRooutes = require('./invitation')
+const invitationRooutes = require('./invitationRoutes')
 
 // Définition des endpoints
 router.use('/auth', authRoutes);
@@ -21,7 +21,7 @@ router.use('/comptes', compteRoutes);
 router.use('/rapports', rapportRoutes);
 router.use('/categories', categorieRoutes);
 router.use('/dashboard', dashboardRoutes);
-router.use('/alerte', alerteRoutes);
+router.use('/alertes', alerteRoutes);
 router.use('/invitations', invitationRooutes);
 router.use('/budgets', budgetRoutes);
 router.use('/devises', deviseRoutes);
