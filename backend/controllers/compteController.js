@@ -182,7 +182,15 @@ const updateCompte = async (req, res) => {
   try {
     const { id } = req.params;
     const { nom_compte, type_compte } = req.body;
-    const userId = req.user.id_utilisateur;
+
+    // Récupérer l'utilisateur à partir du token
+    const user = await getUserFromToken(req);
+    
+    if (!user) {
+      return res.status(401).json({ message: 'Non authentifié' });
+    }
+    
+    const userId = user.id_utilisateur;
     
     const menageIds = await getMenagesByUser(userId);
     

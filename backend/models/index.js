@@ -1,37 +1,39 @@
-require('dotenv').config()
-const { Sequelize } = require('sequelize');
+const fs = require('fs');
+const path = require('path');
+const Sequelize = require('sequelize');
+const sequelize = require('./database');  // ← Importer depuis database.js
 
-// Création de l'instance Sequelize
-const sequelize = new Sequelize(
-    process.env.DB_NAME,
-    process.env.DB_USER,
-    process.env.DB_PASSWORD,
-    {
-        host: process.env.DB_HOST,
-        dialect: 'mysql', // Indique que l'on utilise MySQL
-        logging: false, // Désactive les logs SQL dans la console
-        pool: {
-            max: 20,  // Nombre maximum de connexions simultanées
-            min: 0,   // Nombre minimum de connexions
-            acquire: 30000, // Temps max pour obtenir une connexion
-            idle: 10000  // Temps max d'inactivité avant de fermer une connexion
+const db = {};
+
+// Charger tous les modèles
+const files = fs.readdirSync(__dirname);
+
+files.forEach(file => {
+    if (file !== 'index.js' && file !== 'database.js' && file.endsWith('.js')) {
+        try {
+        const model = require(path.join(__dirname, file));
+        if (model && model.name) {
+            db[model.name] = model;
+            console.log(`✅ Modèle chargé: ${model.name}`);
+        }
+        } catch (error) {
+        console.error(`❌ Erreur chargement ${file}:`, error.message);
         }
     }
-);
+});
 
-// Vérifier la connexion
-async function checkDatabaseConnection() {
-    try {
-        await sequelize.authenticate();
-        console.log('✅ Connecté à la base de données MySQL avec Sequelize');
-    } catch (err) {
-        console.error('❌ Erreur de connexion à MySQL :', err);
-        process.exit(1);
+// Définir les associations
+Object.keys(db).forEach(modelName => {
+    if (db[modelName].associate) {
+        try {
+        db[modelName].associate(db);
+        } catch (error) {
+        console.error(`❌ Erreur association ${modelName}:`, error.message);
+        }
     }
-}
+});
 
-// Vérification au démarrage
-checkDatabaseConnection();
+db.sequelize = sequelize;
+db.Sequelize = Sequelize;
 
-module.exports = sequelize;
-
+module.exports = db;
