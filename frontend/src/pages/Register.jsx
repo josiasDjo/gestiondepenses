@@ -144,6 +144,7 @@ const Register = () => {
             </div>
             
             <div>
+
               <label htmlFor="mot_de_passe" className="block text-sm font-medium text-gray-700 mb-2">
                 Mot de passe
               </label>
@@ -172,13 +173,17 @@ const Register = () => {
 
             <div>
               <label htmlFor="confirm_mot_de_passe" className="block text-sm font-medium text-gray-700 mb-2">
+
                 Confirmer le mot de passe
               </label>
               <div className="relative">
                 <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
+
                   id="confirm_mot_de_passe"
                   name="confirm_mot_de_passe"
+
+
                   type={showConfirmPassword ? 'text' : 'password'}
                   required
                   value={formData.confirmPassword}
