@@ -7,7 +7,7 @@ const { protect } = require('../middlewares/authMiddleware');
 // router.use(protect);
 
 // Routes principales
-router.get('/all', compteController.getMesComptes);
+router.get('/', compteController.getMesComptes);
 router.get('/solde/total', compteController.getSoldeTotal);
 router.get('/:id', compteController.getCompteById);
 

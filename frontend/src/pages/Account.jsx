@@ -22,7 +22,7 @@ const Comptes = () => {
 
     const fetchComptes = async () => {
         try {
-        const response = await api.get('/comptes/all');
+        const response = await api.get('/comptes/');
 
         setComptes(response.data);
         console.log('Data Response : ', response.data)

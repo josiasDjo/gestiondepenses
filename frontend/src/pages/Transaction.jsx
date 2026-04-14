@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiFilter, FiDownload, FiX, FiSearch } from 'react-icons/fi';
+import { useNavigate } from "react-router-dom";
+import { FiPlus, FiEdit2, FiTrash2, FiFilter, FiDownload, FiX, FiSearch, FiDollarSign } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 
@@ -8,7 +9,11 @@ const Transactions = () => {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingTransaction, setEditingTransaction] = useState(null);
-    const [stats, setStats] = useState({ revenus: 0, depenses: 0, solde: 0 });
+    const [stats, setStats] = useState({
+        global: { revenus: 0, depenses: 0, solde: 0 },
+        parDevise: [],
+        categories: []
+    });
     const [filters, setFilters] = useState({
         type: 'all',
         categorie: 'all',
@@ -24,6 +29,7 @@ const Transactions = () => {
         id_compte: ''
     });
     const [comptes, setComptes] = useState([]);
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchComptes();
@@ -33,8 +39,9 @@ const Transactions = () => {
 
     const fetchComptes = async () => {
         try {
-            const response = await api.get('/comptes');
-            setComptes(response.data);
+        const response = await api.get('/comptes');
+        setComptes(response.data);
+        console.log('Comptes : ', response.data);
         if (response.data.length > 0) {
             setFormData(prev => ({ ...prev, id_compte: response.data[0].id_compte }));
         }
@@ -55,6 +62,7 @@ const Transactions = () => {
         const response = await api.get(`/transactions?${params}`);
         setTransactions(response.data.transactions);
         setFilters(prev => ({ ...prev, totalPages: response.data.totalPages }));
+        console.log('Transaction : ', response.data)
         } catch (error) {
         toast.error('Erreur lors du chargement');
         } finally {
@@ -66,6 +74,7 @@ const Transactions = () => {
         try {
         const response = await api.get('/transactions/stats');
         setStats(response.data);
+        console.log('Stats par devise : ', response.data);
         } catch (error) {
         console.error('Erreur stats:', error);
         }
@@ -85,7 +94,7 @@ const Transactions = () => {
         resetForm();
         fetchTransactions();
         fetchStats();
-        fetchComptes(); // Rafraîchir les soldes des comptes
+        fetchComptes();
         } catch (error) {
         toast.error(error.response?.data?.message || 'Erreur');
         }
@@ -138,10 +147,26 @@ const Transactions = () => {
         }
     };
 
+    // Obtenir les couleurs pour les devises
+    const getDeviseColor = (code) => {
+        switch(code) {
+        case 'FC': return 'from-gray-500 to-gray-600';
+        case 'USD': return 'from-gray-500 to-gray-600';
+        default: return 'from-gray-500 to-gray-600';
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Header */}
+            <button
+            onClick={() => navigate(-1)}
+            className="bg-white cursor-pointer text-blue-900 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-red-200 hover:text-black transition-colors mb-4"
+            >
+            Retour
+            </button>
+
             <div className="flex justify-between items-center mb-8">
             <div>
                 <h1 className="text-3xl font-bold text-gray-900">Transactions</h1>
@@ -163,21 +188,42 @@ const Transactions = () => {
             </div>
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-green-50 rounded-xl p-6 border border-green-100">
-                <p className="text-green-600 text-sm">Total revenus</p>
-                <p className="text-2xl font-bold text-green-700">{stats.revenus.toLocaleString()} FCFA</p>
+
+
+            {/* Stats par Devise */}
+            {stats.parDevise && stats.parDevise.length > 0 && (
+            <div className="mb-8">
+                <h2 className="text-lg font-semibold text-gray-700 mb-3">Par devise</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {stats.parDevise.map((devise) => (
+                    <div key={devise.id_devise} className={`bg-gradient-to-r ${getDeviseColor(devise.code_devise)} rounded-xl p-5 text-white shadow-lg`}>
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                        <h3 className="text-xl font-bold">{devise.code_devise}</h3>
+                        </div>
+                        <span className="text-sm bg-white/20 px-3 py-1 rounded-full">{devise.nom_devise}</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                        <div className="bg-white/10 rounded-lg p-2 text-center">
+                        <p className="text-xs opacity-80">Revenus</p>
+                        <p className="text-lg font-bold">{devise.revenus.toLocaleString()}</p>
+                        </div>
+                        <div className="bg-white/10 rounded-lg p-2 text-center">
+                        <p className="text-xs opacity-80">Dépenses</p>
+                        <p className="text-lg font-bold">{devise.depenses.toLocaleString()}</p>
+                        </div>
+                        <div className="bg-white/10 rounded-lg p-2 text-center">
+                        <p className="text-xs opacity-80">Solde</p>
+                        <p className={`text-lg font-bold ${devise.solde >= 0 ? 'text-green-300' : 'text-red-300'}`}>
+                            {devise.solde.toLocaleString()}
+                        </p>
+                        </div>
+                    </div>
+                    </div>
+                ))}
+                </div>
             </div>
-            <div className="bg-red-50 rounded-xl p-6 border border-red-100">
-                <p className="text-red-600 text-sm">Total dépenses</p>
-                <p className="text-2xl font-bold text-red-700">{stats.depenses.toLocaleString()} FCFA</p>
-            </div>
-            <div className="bg-blue-50 rounded-xl p-6 border border-blue-100">
-                <p className="text-blue-600 text-sm">Solde</p>
-                <p className="text-2xl font-bold text-blue-700">{stats.solde.toLocaleString()} FCFA</p>
-            </div>
-            </div>
+            )}
 
             {/* Filters */}
             <div className="bg-white rounded-xl shadow-sm p-4 mb-6 flex flex-wrap gap-4 items-center">
@@ -205,9 +251,9 @@ const Transactions = () => {
             </select>
             <button
                 onClick={fetchTransactions}
-                className="ml-auto bg-primary-500 text-white px-4 py-2 rounded-lg text-sm"
+                className="ml-auto bg-primary-500 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2"
             >
-                <FiSearch className="inline mr-1" /> Filtrer
+                <FiSearch /> Filtrer
             </button>
             </div>
 
@@ -219,7 +265,7 @@ const Transactions = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Date</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Description</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Catégorie</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Compte</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Compte / Devise</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500">Montant</th>
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500">Actions</th>
                 </tr>
@@ -249,9 +295,18 @@ const Transactions = () => {
                             {t.categorie}
                         </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{t.compte?.nom_compte || '-'}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                        <span className="flex items-center gap-1">
+                            {t.compte?.nom_compte || '-'}
+                            {t.compte?.devise?.code_devise && (
+                            <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">
+                                {t.compte.devise.code_devise}
+                            </span>
+                            )}
+                        </span>
+                        </td>
                         <td className={`px-6 py-4 text-sm text-right font-medium ${t.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                        {t.type === 'income' ? '+' : '-'} {t.montant.toLocaleString()} FCFA
+                        {t.type === 'income' ? '+' : '-'} {t.montant.toLocaleString()} {t.compte.devise.code_devise}
                         </td>
                         <td className="px-6 py-4 text-center">
                         <button onClick={() => handleEdit(t)} className="text-blue-500 hover:text-blue-700 mr-3">
@@ -290,7 +345,7 @@ const Transactions = () => {
             )}
         </div>
 
-        {/* Modal */}
+        {/* Modal - inchangé */}
         {showModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl max-w-md w-full p-6">
@@ -385,7 +440,9 @@ const Transactions = () => {
                     className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
                     >
                     {comptes.map(c => (
-                        <option key={c.id_compte} value={c.id_compte}>{c.nom_compte}</option>
+                        <option key={c.id_compte} value={c.id_compte}>
+                        {c.nom_compte} {c.devise?.code_devise && `(${c.devise.code_devise})`}
+                        </option>
                     ))}
                     </select>
                 </div>
