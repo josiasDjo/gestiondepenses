@@ -4,6 +4,7 @@ import { Line, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import toast from 'react-hot-toast';
 import api from '../services/api';
+import TableTransaction from '../components/tableTransactions';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
 
@@ -16,6 +17,7 @@ const getDeviseColor = (code) => {
 };
 
 const Dashboard = () => {
+  const [transactions, setTransactions] = useState([]);
   const [stats, setStats] = useState({
     global: { totalBalance: 0, totalIncome: 0, totalExpense: 0 },
     parDevise: [],
@@ -32,7 +34,7 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       const response = await api.get('/dashboard/stats');
-      console.log('Dashboard response:', response.data);
+      // console.log('Dashboard response:', response.data);
       
       const data = response.data || {};
       
@@ -46,6 +48,26 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Erreur:', error);
       toast.error('Erreur lors du chargement des données');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTransactions = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: filters.page,
+        limit: 20,
+        type: filters.type,
+        categorie: filters.categorie
+      });
+      const response = await api.get(`/transactions?${params}`);
+      setTransactions(response.data.transactions);
+      setFilters(prev => ({ ...prev, totalPages: response.data.totalPages }));
+      console.log('Transaction : ', response.data)
+    } catch (error) {
+      toast.error('Erreur lors du chargement');
     } finally {
       setLoading(false);
     }
@@ -98,40 +120,6 @@ const Dashboard = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Tableau de bord</h1>
           <p className="text-gray-600 mt-2">Bienvenue ! Voici un aperçu de vos finances</p>
-        </div>
-
-        {/* Stats Globales */}
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-700 mb-3">Synthèse globale</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl shadow-lg p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-primary-100 text-sm">Solde total</p>
-                  <p className="text-3xl font-bold mt-2">{(stats.global?.totalBalance || 0).toLocaleString()} FCFA</p>
-                </div>
-                <FiDollarSign className="text-4xl text-primary-200" />
-              </div>
-            </div>
-            <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-green-100 text-sm">Total revenus (mois)</p>
-                  <p className="text-3xl font-bold mt-2">{(stats.global?.totalIncome || 0).toLocaleString()} FCFA</p>
-                </div>
-                <FiTrendingUp className="text-4xl text-green-200" />
-              </div>
-            </div>
-            <div className="bg-gradient-to-r from-red-500 to-red-600 rounded-xl shadow-lg p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-red-100 text-sm">Total dépenses (mois)</p>
-                  <p className="text-3xl font-bold mt-2">{(stats.global?.totalExpense || 0).toLocaleString()} FCFA</p>
-                </div>
-                <FiTrendingDown className="text-4xl text-red-200" />
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Stats par Devise */}
@@ -188,33 +176,7 @@ const Dashboard = () => {
         </div>
 
         {/* Recent Transactions */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Transactions récentes</h3>
-            <button className="bg-primary-500 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-primary-600">
-              <FiPlus /> Ajouter
-            </button>
-          </div>
-          {(stats.recentTransactions || []).length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr><th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Date</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Description</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Catégorie</th><th className="px-6 py-3 text-right text-xs font-medium text-gray-500">Montant</th></tr>
-                </thead>
-                <tbody>
-                  {stats.recentTransactions.map((t, i) => (
-                    <tr key={i} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 text-sm">{new Date(t.date).toLocaleDateString()}</td>
-                      <td className="px-6 py-4 text-sm">{t.description}</td>
-                      <td className="px-6 py-4"><span className="px-2 py-1 text-xs rounded-full bg-primary-100 text-primary-800">{t.category}</span></td>
-                      <td className={`px-6 py-4 text-sm text-right font-medium ${t.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>{t.type === 'income' ? '+' : '-'} {(t.amount || 0).toLocaleString()} {t.compte.devise.code_devise}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (<p className="text-gray-500 text-center py-8">Aucune transaction récente</p>)}
-        </div>
+        <TableTransaction />
       </div>
     </div>
   );

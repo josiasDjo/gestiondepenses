@@ -5,7 +5,7 @@ const { protect } = require('../middlewares/authMiddleware');
 
 // router.use(protect);
 
-router.post('/', transactionController.createTransaction);
+router.post('/add', transactionController.createTransaction);
 router.get('/', transactionController.getMesTransactions);
 router.get('/stats', transactionController.getTransactionStats);
 router.put('/:id', transactionController.updateTransaction);

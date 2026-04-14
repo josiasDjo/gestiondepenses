@@ -12,7 +12,7 @@ const api = axios.create({
     api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
-        console.log('Token dans intercepteur:', token ? 'Présent' : 'Absent');
+        // console.log('Token dans intercepteur:', token ? 'Présent' : 'Absent');
         if (token) {
         config.headers.Authorization = `Bearer ${token}`;
         } else {
@@ -30,7 +30,7 @@ const api = axios.create({
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-        console.error('❌ Non autorisé - Redirection vers login');
+        // console.error('❌ Non autorisé - Redirection vers login');
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/login';

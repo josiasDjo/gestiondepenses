@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FiPlus, FiEdit2, FiTrash2, FiFilter, FiDownload, FiX, FiSearch, FiDollarSign } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import api from '../services/api';
+import TableTransaction from '../components/tableTransactions';
 
 const Transactions = () => {
     const [transactions, setTransactions] = useState([]);
@@ -74,7 +75,6 @@ const Transactions = () => {
         try {
         const response = await api.get('/transactions/stats');
         setStats(response.data);
-        console.log('Stats par devise : ', response.data);
         } catch (error) {
         console.error('Erreur stats:', error);
         }
@@ -225,124 +225,11 @@ const Transactions = () => {
             </div>
             )}
 
-            {/* Filters */}
-            <div className="bg-white rounded-xl shadow-sm p-4 mb-6 flex flex-wrap gap-4 items-center">
-            <FiFilter className="text-gray-400" />
-            <select
-                value={filters.type}
-                onChange={(e) => setFilters({ ...filters, type: e.target.value, page: 1 })}
-                className="px-3 py-2 border rounded-lg text-sm"
-            >
-                <option value="all">Tous les types</option>
-                <option value="income">Revenus</option>
-                <option value="expense">Dépenses</option>
-            </select>
-            <select
-                value={filters.categorie}
-                onChange={(e) => setFilters({ ...filters, categorie: e.target.value, page: 1 })}
-                className="px-3 py-2 border rounded-lg text-sm"
-            >
-                <option value="all">Toutes les catégories</option>
-                <option value="Alimentation">Alimentation</option>
-                <option value="Transport">Transport</option>
-                <option value="Logement">Logement</option>
-                <option value="Loisirs">Loisirs</option>
-                <option value="Santé">Santé</option>
-            </select>
-            <button
-                onClick={fetchTransactions}
-                className="ml-auto bg-primary-500 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2"
-            >
-                <FiSearch /> Filtrer
-            </button>
-            </div>
+            
 
-            {/* Transactions Table */}
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <table className="w-full">
-                <thead className="bg-gray-50 border-b">
-                <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Description</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Catégorie</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Compte / Devise</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500">Montant</th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500">Actions</th>
-                </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                {loading ? (
-                    <tr>
-                    <td colSpan="6" className="text-center py-8">
-                        <div className="w-8 h-8 border-t-2 border-primary-500 rounded-full animate-spin mx-auto"></div>
-                    </td>
-                    </tr>
-                ) : transactions.length === 0 ? (
-                    <tr>
-                    <td colSpan="6" className="text-center py-8 text-gray-500">
-                        Aucune transaction
-                    </td>
-                    </tr>
-                ) : (
-                    transactions.map((t) => (
-                    <tr key={t.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 text-sm text-gray-600">
-                        {new Date(t.date).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">{t.description || '-'}</td>
-                        <td className="px-6 py-4">
-                        <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">
-                            {t.categorie}
-                        </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-600">
-                        <span className="flex items-center gap-1">
-                            {t.compte?.nom_compte || '-'}
-                            {t.compte?.devise?.code_devise && (
-                            <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">
-                                {t.compte.devise.code_devise}
-                            </span>
-                            )}
-                        </span>
-                        </td>
-                        <td className={`px-6 py-4 text-sm text-right font-medium ${t.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                        {t.type === 'income' ? '+' : '-'} {t.montant.toLocaleString()} {t.compte.devise.code_devise}
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                        <button onClick={() => handleEdit(t)} className="text-blue-500 hover:text-blue-700 mr-3">
-                            <FiEdit2 className="inline" />
-                        </button>
-                        <button onClick={() => handleDelete(t.id)} className="text-red-500 hover:text-red-700">
-                            <FiTrash2 className="inline" />
-                        </button>
-                        </td>
-                    </tr>
-                    ))
-                )}
-                </tbody>
-            </table>
-            </div>
+            {/* Table Transaction */}
+            <TableTransaction />
 
-            {/* Pagination */}
-            {filters.totalPages > 1 && (
-            <div className="flex justify-center gap-2 mt-6">
-                <button
-                onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
-                disabled={filters.page === 1}
-                className="px-3 py-1 border rounded-lg disabled:opacity-50"
-                >
-                Précédent
-                </button>
-                <span className="px-3 py-1">Page {filters.page} / {filters.totalPages}</span>
-                <button
-                onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
-                disabled={filters.page === filters.totalPages}
-                className="px-3 py-1 border rounded-lg disabled:opacity-50"
-                >
-                Suivant
-                </button>
-            </div>
-            )}
         </div>
 
         {/* Modal - inchangé */}
