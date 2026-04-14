@@ -1,5 +1,7 @@
-module.exports = (sequelize, DataTypes) => {
-    const Alerte = sequelize.define('Alerte', {
+const { DataTypes } = require('sequelize');
+const sequelize = require('./database');
+
+const Alerte = sequelize.define('Alerte', {
         id_alerte: {type: DataTypes.INTEGER,primaryKey: true,autoIncrement: true},
         message: {type: DataTypes.TEXT,allowNull: true},
         date_alerte: {type: DataTypes.DATE,defaultValue: DataTypes.NOW},
@@ -11,11 +13,8 @@ module.exports = (sequelize, DataTypes) => {
     });
 
     Alerte.associate = (models) => {
-        Alerte.belongsTo(models.Budget, {
-        foreignKey: 'id_budget',
-        as: 'budget'
-        });
-    };
-
-    return Alerte;
+        Alerte.belongsTo(models.Budget, { foreignKey: 'id_budget',as: 'budget' });
+        Alerte.belongsTo(models.Menage, { foreignKey: 'id_menage', as: 'menage' });
 };
+
+module.exports = Alerte;
