@@ -1,5 +1,6 @@
 const { Alerte, Budget, Transaction } = require('../models');
 const { Op } = require('sequelize');
+const { getUserFromToken } = require('../utils/auth')
 
 // Vérifier les budgets et créer des alertes
 const verifierBudgets = async (id_menage) => {

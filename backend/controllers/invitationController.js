@@ -1,11 +1,13 @@
 const { Utilisateur, Menage, MembresMenage, sequelize } = require('../models');
 const { Op } = require('sequelize');
+const { getUserFromToken } = require('../utils/auth')
 
 // Envoyer une invitation
 const envoyerInvitation = async (req, res) => {
     try {
         const { email, id_menage, role } = req.body;
         const user = await getUserFromToken(req);
+        console.log('ID Menage : ', id_menage, ' ID User : ', user.id_utilisateur)
         
         // Vérifier que l'utilisateur est admin du ménage
         const estAdmin = await MembresMenage.findOne({
@@ -49,10 +51,10 @@ const envoyerInvitation = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
-    };
+};
 
-    // Accepter une invitation
-    const accepterInvitation = async (req, res) => {
+// Accepter une invitation
+const accepterInvitation = async (req, res) => {
     try {
         const { token } = req.params;
         const user = await getUserFromToken(req);
@@ -88,3 +90,5 @@ const envoyerInvitation = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+module.exports = { envoyerInvitation, accepterInvitation }

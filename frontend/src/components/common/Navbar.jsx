@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiMenu, FiX, FiLogOut, FiUser, FiHome, FiPieChart, FiList, FiCreditCard } from 'react-icons/fi';
-
+import Notification from '../notification'
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
@@ -46,6 +46,7 @@ const Navbar = () => {
               </Link>
             ))}
             <div className="border-l pl-4 flex items-center space-x-3">
+              <Notification />
               <span className="text-sm text-gray-600">
                 <FiUser className="inline mr-1" /> {user.nom || 'Utilisateur'}
               </span>

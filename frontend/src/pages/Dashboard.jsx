@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { FiPlus, FiTrendingUp, FiTrendingDown, FiDollarSign } from 'react-icons/fi';
+import React, { useState, useEffect, useCallback } from 'react';
+import { FiPlus, FiTrendingUp, FiTrendingDown, FiDollarSign, FiUsers } from 'react-icons/fi';
 import { Line, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 import TableTransaction from '../components/tableTransactions';
+import InvitationModal from '../components/menage/InvitationModal';
+import MenageSelector from '../components/menage/MenageSelector';
+import { useMenage } from '../context/MenageContext';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
 
@@ -17,7 +20,8 @@ const getDeviseColor = (code) => {
 };
 
 const Dashboard = () => {
-  const [transactions, setTransactions] = useState([]);
+  const { menageActif } = useMenage();
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const [stats, setStats] = useState({
     global: { totalBalance: 0, totalIncome: 0, totalExpense: 0 },
     parDevise: [],
@@ -27,15 +31,13 @@ const Dashboard = () => {
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
+  // Utiliser useCallback pour éviter la recréation de la fonction
+  const fetchDashboardData = useCallback(async () => {
+    if (!menageActif) return;
+    
     try {
-      const response = await api.get('/dashboard/stats');
-      // console.log('Dashboard response:', response.data);
-      
+      setLoading(true);
+      const response = await api.get(`/dashboard/stats?id_menage=${menageActif.id_menage}`);
       const data = response.data || {};
       
       setStats({
@@ -51,27 +53,21 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [menageActif]); // Ne dépend que de menageActif
 
-  const fetchTransactions = async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        page: filters.page,
-        limit: 20,
-        type: filters.type,
-        categorie: filters.categorie
-      });
-      const response = await api.get(`/transactions?${params}`);
-      setTransactions(response.data.transactions);
-      setFilters(prev => ({ ...prev, totalPages: response.data.totalPages }));
-      console.log('Transaction : ', response.data)
-    } catch (error) {
-      toast.error('Erreur lors du chargement');
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]); // Ne s'exécute que quand fetchDashboardData change
+
+  // Écouter les changements de ménage sans créer de boucle
+  useEffect(() => {
+    const handleMenageChange = () => {
+      fetchDashboardData();
+    };
+    
+    window.addEventListener('menageChanged', handleMenageChange);
+    return () => window.removeEventListener('menageChanged', handleMenageChange);
+  }, [fetchDashboardData]);
 
   const lineChartData = {
     labels: stats.evolution?.labels || [],
@@ -106,7 +102,7 @@ const Dashboard = () => {
     plugins: { legend: { position: 'bottom' } }
   };
 
-  if (loading) {
+  if (loading && !stats.global.totalBalance) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="w-16 h-16 border-t-4 border-primary-500 border-solid rounded-full animate-spin"></div>
@@ -117,15 +113,31 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Tableau de bord</h1>
-          <p className="text-gray-600 mt-2">Bienvenue ! Voici un aperçu de vos finances</p>
+        {/* Header avec sélecteur de ménage */}
+        <div className="mb-8 flex justify-between items-center flex-wrap gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Tableau de bord</h1>
+            <p className="text-gray-600 mt-2">Bienvenue ! Voici un aperçu de vos finances</p>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <MenageSelector />
+            
+            <button
+              onClick={() => setShowInviteModal(true)}
+              className="bg-primary-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary-600 transition-colors"
+            >
+              <FiUsers /> Inviter un membre
+            </button>
+          </div>
         </div>
 
         {/* Stats par Devise */}
         {(stats.parDevise || []).length > 0 && (
           <div className="mb-8">
-            <h2 className="text-lg font-semibold text-gray-700 mb-3">Par devise</h2>
+            <h2 className="text-lg font-semibold text-gray-700 mb-3">
+              Par devise - {menageActif?.nom_menage}
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {stats.parDevise.map((devise) => (
                 <div key={devise.id_devise} className={`bg-gradient-to-r ${getDeviseColor(devise.code_devise)} rounded-xl p-5 text-white shadow-lg`}>
@@ -177,6 +189,19 @@ const Dashboard = () => {
 
         {/* Recent Transactions */}
         <TableTransaction />
+
+        {/* Modal Invitation */}
+        {showInviteModal && menageActif && (
+          <InvitationModal
+            menageId={menageActif.id_menage}
+            menageNom={menageActif.nom_menage}
+            onClose={() => setShowInviteModal(false)}
+            onSuccess={() => {
+              setShowInviteModal(false);
+              fetchDashboardData();
+            }}
+          />
+        )}
       </div>
     </div>
   );
