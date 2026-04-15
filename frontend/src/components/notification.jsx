@@ -14,7 +14,7 @@ const NotificationBell = () => {
     const fetchNotifications = async () => {
         try {
         const [alertesRes, invitationsRes] = await Promise.all([
-            // api.get('/alertes/non-lues').catch(() => ({ data: [] })),
+            api.get('/alertes/non-lues').catch(() => ({ data: [] })),
             api.get('/invitations/mes-invitations').catch(() => ({ data: [] }))
         ]);
         
@@ -29,7 +29,7 @@ const NotificationBell = () => {
 
     useEffect(() => {
         fetchNotifications();
-        const interval = setInterval(fetchNotifications, 60000); // Rafraîchir toutes les 30s
+        const interval = setInterval(fetchNotifications, 60000);
         return () => clearInterval(interval);
     }, []);
 

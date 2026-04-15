@@ -87,7 +87,7 @@ const Transactions = () => {
             await api.put(`/transactions/${editingTransaction.id}`, formData);
             toast.success('Transaction modifiée');
         } else {
-            await api.post('/transactions', formData);
+            await api.post('/transactions/', formData);
             toast.success('Transaction ajoutée');
         }
         setShowModal(false);

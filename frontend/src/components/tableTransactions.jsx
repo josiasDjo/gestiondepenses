@@ -86,7 +86,7 @@ const TableTransaction = () => {
             await api.put(`/transactions/${editingTransaction.id}`, formData);
             toast.success('Transaction modifiée');
         } else {
-            await api.post('/transactions', formData);
+            await api.post('/transactions/', formData);
             toast.success('Transaction ajoutée');
         }
         setShowModal(false);
@@ -138,13 +138,7 @@ const TableTransaction = () => {
         setShowModal(true);
     };
 
-    const exportCSV = async () => {
-        try {
-        window.open('/api/rapports/export/csv', '_blank');
-        } catch (error) {
-        toast.error('Erreur lors de l\'export');
-        }
-    };
+
 
     return (
         <div>
