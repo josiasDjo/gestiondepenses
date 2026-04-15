@@ -12,15 +12,13 @@ passport.use(new GoogleStrategy({
     },
     async (req, accessToken, refreshToken, profile, done) => {
         try {
-        console.log('📝 Profil Google reçu:', profile.emails[0].value);
-        
+
         // Vérifier si l'utilisateur existe déjà
         let user = await Utilisateur.findOne({ 
             where: { email: profile.emails[0].value }
         });
         
         if (!user) {
-            console.log('📌 Nouvel utilisateur, création en cours...');
             
             // Créer le nouvel utilisateur
             user = await Utilisateur.create({
@@ -31,29 +29,21 @@ passport.use(new GoogleStrategy({
             provider: 'google',
             email_verifie: true,
             mot_de_passe: null
-            });
-            
-            console.log('Utilisateur créé avec ID:', user.id_utilisateur);
+            });       
             
             // Créer un ménage par défaut pour le nouvel utilisateur
             const menage = await Menage.create({ 
             nom_menage: `Ménage de ${profile.displayName}` 
             });
-            
-            console.log('Ménage créé avec ID:', menage.id_menage);
-            
+    
             // Associer l'utilisateur au ménage
             await membresMenageController.creerAssociation(
             user.id_utilisateur,
             menage.id_menage,
             'admin'
             );
-            
-            console.log('Association créée avec succès');
-        } else {
-            console.log('Utilisateur existant:', user.email);
-            
-            // Mettre à jour les informations si nécessaire
+        } else {           
+            // Mettre à jour les informations
             if (!user.google_id) {
             await user.update({
                 google_id: profile.id,
@@ -67,7 +57,7 @@ passport.use(new GoogleStrategy({
         return done(null, user);
         
         } catch (error) {
-        console.error('❌ Erreur stratégie Google:', error);
+        console.error('Erreur stratégie Google:', error);
         return done(error, null);
         }
     }
