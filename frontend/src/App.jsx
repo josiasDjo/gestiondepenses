@@ -1,6 +1,7 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { MenageProvider, useMenage } from './context/MenageContext';
 import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -10,34 +11,36 @@ import Comptes from './pages/Account';
 import Rapport from './pages/Rapports';
 import Transaction from './pages/Transaction';
 import OAuthCallback from './pages/OAuthCallback';
-import { MenageProvider } from './context/MenageContext';
 import AccepterInvitation  from './pages/AccepterInvitation';
 
-// Route protection
-const PrivateRoute = ({ children }) => {
+// Composant wrapper pour charger les ménages après connexion
+const AppContent = () => {
+  const { fetchMenages } = useMenage();
+  const location = useLocation();
   const token = localStorage.getItem('token');
-  return token ? children : <Navigate to="/login" />;
-};
 
-function App() {
+  useEffect(() => {
+    // Charger les ménages UNIQUEMENT si l'utilisateur est connecté
+    // et qu'on est sur une page protégée
+    if (token && location.pathname !== '/login' && location.pathname !== '/register') {
+      fetchMenages();
+    }
+  }, [token, location.pathname]);
+
   return (
-    <MenageProvider> {/* ← ENVELOPPER TOUTE L'APPLICATION */}
+    <>
       <Toaster position="top-right" />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/oauth-callback" element={<OAuthCallback />} />
-        
-        {/* Routes protégées */}
         <Route
           path="/dashboard"
           element={
             <PrivateRoute>
-              <>
-                <Navbar />
-                <Dashboard />
-              </>
+              <Navbar />
+              <Dashboard />
             </PrivateRoute>
           }
         />
@@ -45,10 +48,8 @@ function App() {
           path="/accounts"
           element={
             <PrivateRoute>
-              <>
-                <Navbar />
-                <Comptes />
-              </>
+              <Navbar />
+              <Comptes />
             </PrivateRoute>
           }
         />
@@ -56,10 +57,8 @@ function App() {
           path="/transactions"
           element={
             <PrivateRoute>
-              <>
-                <Navbar />
-                <Transaction />
-              </>
+              <Navbar />
+              <Transaction />
             </PrivateRoute>
           }
         />
@@ -67,15 +66,25 @@ function App() {
           path="/reports"
           element={
             <PrivateRoute>
-              <>
-                <Navbar />
-                <Rapport />
-              </>
+              <Navbar />
+              <Rapport />
             </PrivateRoute>
           }
         />
-        <Route path="/invitations/accepter/:token" element={<AccepterInvitation />} />
       </Routes>
+    </>
+  );
+};
+
+const PrivateRoute = ({ children }) => {
+  const token = localStorage.getItem('token');
+  return token ? children : <Navigate to="/login" />;
+};
+
+function App() {
+  return (
+    <MenageProvider>
+      <AppContent />
     </MenageProvider>
   );
 }

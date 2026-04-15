@@ -4,7 +4,7 @@ const Menage = require('../models/Menage')
 const MembresMenage = require('../models/Membres_menage')
 const membresMenageController = require('./membresMenageController')
 const config = require('../config/env');
-const passport = require('passport-google-oauth20')
+const passport = require('passport');
 const bcrypt = require("bcryptjs");
 const { where } = require('sequelize'); 
 
@@ -47,7 +47,7 @@ const register = async (req, res) => {
       menage.id_menage,
       'admin'
     );
-    console.log('✅ Association créée:', association);
+    // console.log('Association créée:', association);
     const token = genererToken(user.id_utilisateur);
     
     res.status(201).json({
@@ -108,30 +108,31 @@ const login = async (req, res) => {
 // ========== Routes Google OAuth ==========
 
 // Démarrer l'authentification Google
-// const googleAuth = passport.authenticate('google', {
-//     scope: ['profile', 'email'],
-//     session: true
-// });
+const googleAuth = passport.authenticate('google', {
+    scope: ['profile', 'email'],
+    session: true
+});
 
-// // Callback après authentification Google
-// const googleCallback = (req, res, next) => {
-//     passport.authenticate('google', { session: true }, async (err, user, info) => {
-//         if (err || !user) {
-//         return res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`);
-//         }
+// Callback après authentication Google
+const googleCallback = (req, res, next) => {
+    passport.authenticate('google', { session: true }, async (err, user, info) => {
+        if (err || !user) {
+          console.log(`Auth google check error : ${err}`)
+          return res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`);
+        }
         
-//         // Générer un token JWT
-//         const token = genererToken(user.id_utilisateur);
+        // Générer un token JWT
+        const token = genererToken(user.id_utilisateur);
         
-//         // Rediriger vers le frontend avec le token
-//         res.redirect(`${process.env.FRONTEND_URL}/oauth-callback?token=${token}&user=${encodeURIComponent(JSON.stringify({
-//         id: user.id_utilisateur,
-//         nom: user.nom,
-//         email: user.email,
-//         avatar: user.avatar
-//         }))}`);
-//     })(req, res, next);
-// };
+        // Rediriger vers le frontend avec le token
+        res.redirect(`${process.env.FRONTEND_URL}/oauth-callback?token=${token}&user=${encodeURIComponent(JSON.stringify({
+          id: user.id_utilisateur,
+          nom: user.nom,
+          email: user.email,
+          avatar: user.avatar
+        }))}`);
+    })(req, res, next);
+};
 
 // Vérifier le statut de l'utilisateur connecté
 const getProfile = async (req, res) => {
@@ -159,8 +160,8 @@ const logout = (req, res) => {
 module.exports = { 
     register, 
     login, 
-    // googleAuth, 
-    // googleCallback, 
+    googleAuth, 
+    googleCallback, 
     getProfile,
     logout
 };

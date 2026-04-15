@@ -16,10 +16,16 @@ export const useMenage = () => {
     const [menageActif, setMenageActif] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Charger la liste des ménages de l'utilisateur
+    // Charger la liste des ménages (appel manuel uniquement)
     const fetchMenages = async () => {
         try {
-        const response = await api.get('menages/utilisateur/menages');
+        const token = localStorage.getItem('token');
+        if (!token) {
+            setLoading(false);
+            return;
+        }
+        
+        const response = await api.get('/utilisateur/menages');
         setMenages(response.data);
         
         // Récupérer le dernier ménage actif depuis localStorage
@@ -42,27 +48,22 @@ export const useMenage = () => {
         }
     };
 
-    // Changer de ménage actif
+    // Changer de ménage actif 
     const changerMenage = (menage) => {
         setMenageActif(menage);
         localStorage.setItem('menageActif', JSON.stringify(menage));
-        // Déclencher un événement pour rafraîchir les données
-        window.dispatchEvent(new CustomEvent('menageChanged', { detail: menage }));
     };
 
-    useEffect(() => {
-        fetchMenages();
-    }, []);
-
     return (
-        <MenageContext.Provider value={{
-        menages,
-        menageActif,
-        loading,
-        changerMenage,
-        refetchMenages: fetchMenages
-        }}>
-        {children}
-        </MenageContext.Provider>
+            <MenageContext.Provider value={{
+            menages,
+            menageActif,
+            loading,
+            changerMenage,
+            fetchMenages,
+            refetchMenages: fetchMenages
+            }}>
+            {children}
+            </MenageContext.Provider>
     );
 };

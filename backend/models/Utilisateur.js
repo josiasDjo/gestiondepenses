@@ -5,7 +5,7 @@ const Utilisateur = sequelize.define('Utilisateur', {
     id_utilisateur: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     nom: { type: DataTypes.STRING(100), allowNull: false },
     email: { type: DataTypes.STRING(150), allowNull: false, unique: true, validate: {isEmail: true}},
-    mot_de_passe: { type: DataTypes.STRING(255), allowNull: true }, // Peut être null pour les utilisateurs Google
+    mot_de_passe: { type: DataTypes.STRING(255), allowNull: true },
     google_id: { type: DataTypes.STRING(255), allowNull: true, unique: true },
     avatar: { type: DataTypes.STRING(255), allowNull: true },
     provider: { type: DataTypes.ENUM('local', 'google'), defaultValue: 'local'},

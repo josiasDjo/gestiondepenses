@@ -16,8 +16,8 @@ router.post('/register', register);
 router.post('/login', login);
 
 // Routes Google OAuth
-// router.get('/google', googleAuth);
-// router.get('/google/callback', googleCallback);
+router.get('/google', googleAuth);
+router.get('/google/callback', googleCallback);
 
 // Routes protégées
 router.get('/profile', protect, getProfile);

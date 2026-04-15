@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FiPlus, FiTrendingUp, FiTrendingDown, FiDollarSign, FiUsers } from 'react-icons/fi';
+import { FiPlus, FiTrendingUp, FiTrendingDown, FiDollarSign, FiUsers, FiRefreshCw } from 'react-icons/fi';
 import { Line, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import toast from 'react-hot-toast';
@@ -30,9 +30,10 @@ const Dashboard = () => {
     evolution: { labels: [], revenus: [], depenses: [] }
   });
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Utiliser useCallback pour éviter la recréation de la fonction
-  const fetchDashboardData = useCallback(async () => {
+  // Fonction pour charger les données - sera appelée manuellement
+  const fetchDashboardData = useCallback(async (showToast = false) => {
     if (!menageActif) return;
     
     try {
@@ -47,27 +48,33 @@ const Dashboard = () => {
         depensesParCategorie: data.depensesParCategorie || [],
         evolution: data.evolution || { labels: [], revenus: [], depenses: [] }
       });
+      
+      if (showToast) {
+        toast.success('Données rafraîchies');
+      }
     } catch (error) {
       console.error('Erreur:', error);
-      toast.error('Erreur lors du chargement des données');
+      if (showToast) {
+        toast.error('Erreur lors du chargement des données');
+      }
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  }, [menageActif]); // Ne dépend que de menageActif
+  }, [menageActif]);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, [fetchDashboardData]); // Ne s'exécute que quand fetchDashboardData change
+  // Rafraîchissement manuel (bouton refresh)
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchDashboardData(true);
+  };
 
-  // Écouter les changements de ménage sans créer de boucle
+  // Chargement initial UNIQUEMENT quand menageActif change
   useEffect(() => {
-    const handleMenageChange = () => {
+    if (menageActif) {
       fetchDashboardData();
-    };
-    
-    window.addEventListener('menageChanged', handleMenageChange);
-    return () => window.removeEventListener('menageChanged', handleMenageChange);
-  }, [fetchDashboardData]);
+    }
+  }, [menageActif]); // ← Seule dépendance : menageActif
 
   const lineChartData = {
     labels: stats.evolution?.labels || [],
@@ -122,6 +129,17 @@ const Dashboard = () => {
           
           <div className="flex items-center gap-4">
             <MenageSelector />
+            
+            {/* Bouton refresh manuel */}
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="bg-gray-100 text-gray-600 px-3 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-200 transition-colors"
+              title="Rafraîchir les données"
+            >
+              <FiRefreshCw className={`${refreshing ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Rafraîchir</span>
+            </button>
             
             <button
               onClick={() => setShowInviteModal(true)}
@@ -188,7 +206,7 @@ const Dashboard = () => {
         </div>
 
         {/* Recent Transactions */}
-        <TableTransaction />
+        <TableTransaction key={menageActif?.id_menage} /> {/* key force le rechargement quand le ménage change */}
 
         {/* Modal Invitation */}
         {showInviteModal && menageActif && (
@@ -198,7 +216,7 @@ const Dashboard = () => {
             onClose={() => setShowInviteModal(false)}
             onSuccess={() => {
               setShowInviteModal(false);
-              fetchDashboardData();
+              fetchDashboardData(true); // Rafraîchir après invitation
             }}
           />
         )}

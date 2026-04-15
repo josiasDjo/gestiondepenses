@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { FiChevronDown, FiHome, FiCheck } from 'react-icons/fi';
 import { useMenage } from '../../context/MenageContext';
 
@@ -6,10 +6,10 @@ const MenageSelector = () => {
     const { menages, menageActif, changerMenage, loading } = useMenage();
     const [isOpen, setIsOpen] = useState(false);
 
-    const handleMenageClick = useCallback((menage) => {
-        changerMenage(menage);
+    const handleMenageClick = (menage) => {
+        changerMenage(menage);  // ← Changement manuel
         setIsOpen(false);
-    }, [changerMenage]);
+    };
 
     if (loading) {
         return (
