@@ -1,82 +1,86 @@
-DOCUMENTATION DU PROJET GESTION DEPENSES
+# DOCUMENTATION DU PROJET GESTION DEPENSES
 
-PRESENTATION DU PROJET
+## **PRESENTATION DU PROJET**
 
 Gestion Dépenses est une application web qui aide les ménages à gérer leur argent au quotidien. Elle permet de suivre les revenus et les dépenses, de visualiser des graphiques, de gérer plusieurs comptes bancaires et de travailler à plusieurs dans le même ménage.
 
-L'application a été développée avec des technologies modernes. Le côté serveur utilise Node.js, Express et la base de données MySQL. Le côté client utilise React et Tailwind CSS pour l'interface utilisateur.
+L'application a été développée avec des technologies du côté serveur, Node.js, Express et la base de données MySQL. Le côté client utilise React et Tailwind CSS pour l'interface utilisateur.
 
-PREREQUIS POUR EXECUTER LE PROJET
+
+## **PREREQUIS POUR EXECUTER LE PROJET**
 
 Avant de pouvoir lancer l'application, vous devez installer certains logiciels sur votre ordinateur.
 
-Vous devez d'abord installer Node.js. Rendez vous sur le site officiel nodejs.org et téléchargez la version recommandée. Pendant l'installation, laissez toutes les options par défaut.
+*1. NODEJS* 
+*2. WAMPSERVER ou XAMPER*
+*3. VS CODE*
 
-Vous devez ensuite installer MySQL. Rendez vous sur le site mysql.com et téléchargez MySQL Community Server. Installez le logiciel et notez bien le mot de passe que vous créez pour l'utilisateur root.
+## **INSTALLATION DU PROJET**
 
-Vous devez aussi installer un outil pour gérer la base de données facilement. Je recommande phpMyAdmin qui est souvent inclus avec WAMP, XAMPP ou MAMP. Sinon vous pouvez utiliser MySQL Workbench.
-
-Vous aurez besoin d'un éditeur de code comme Visual Studio Code pour modifier les fichiers si nécessaire.
-
-Pour l'authentification avec Google, vous devez avoir un compte Google et créer un projet dans la console Google Cloud Platform. Les détails sont expliqués plus loin.
-
-INSTALLATION DU PROJET
-
-Commencez par récupérer le code source du projet. Si vous avez un lien de téléchargement, décompressez le fichier dans un dossier de votre ordinateur. Sinon, ouvrez un terminal dans le dossier où vous voulez mettre le projet et exécutez la commande git clone suivie de l adresse du dépôt.
+Commencez par récupérer le code source du projet. Si vous avez un lien de téléchargement, décompressez le fichier dans un dossier de votre ordinateur. Sinon, ouvrez un terminal dans le dossier où vous voulez mettre le projet et exécutez la commande git clone https://github.com/josiasDjo/gestiondepenses.git 
 
 Une fois le code récupéré, ouvrez un terminal dans le dossier racine du projet. Ce dossier contient deux sous dossiers principaux : backend et frontend.
 
-Pour installer les dépendances du backend, placez vous dans le dossier backend avec la commande cd backend, puis exécutez la commande npm install. Cette opération va télécharger toutes les librairies nécessaires pour le serveur.
+### *Installation des dépendances*
+Dans le dossier racine exécuter la commande  **npm run dep_install** pour installer toutes les dépendances coté Frontend & Backend
 
-Ensuite, placez vous dans le dossier frontend avec cd frontend, puis exécutez la commande npm install. Cette opération va télécharger toutes les librairies nécessaires pour l interface utilisateur.
 
-Revenez au dossier racine du projet avec cd et exécutez la commande npm run install:all si elle existe, sinon faites les installations séparément comme expliqué ci dessus.
+## **CONFIGURATION DE LA BASE DE DONNEES**
 
-CONFIGURATION DE LA BASE DE DONNEES
+Avant de lancer l'application, vous devez créer la base de données.
 
-Avant de lancer l application, vous devez créer la base de données.
+Ouvrez votre outil de gestion MySQL. Créez une nouvelle base de données que vous pouvez appeler gestion_depenses. Choisissez l encodage **utf8mb4_unicode_ci general** .
 
-Ouvrez phpMyAdmin ou votre outil de gestion MySQL. Créez une nouvelle base de données que vous pouvez appeler gestion_depenses. Choisissez l encodage utf8 general ci.
-
-Ensuite, importez le fichier SQL qui se trouve dans le dossier backend/sql. Le fichier s appelle gestion_financiere.sql. Pour importer, allez dans l onglet Importer de phpMyAdmin, sélectionnez le fichier et cliquez sur Exécuter.
+Ensuite, importez le fichier SQL qui se trouve dans le dossier **backend/sql**. Le fichier s appelle gestion_financiere.sql. Pour importer, allez dans l'onglet Importer de phpMyAdmin, sélectionnez le fichier et cliquez sur Exécuter.
 
 Cela va créer toutes les tables nécessaires : utilisateurs, menages, comptes, transactions, devises, invitations, alertes et les tables de liaison.
 
-CONFIGURATION DES VARIABLES D ENVIRONNEMENT
+## **CONFIGURATION DES VARIABLES D ENVIRONNEMENT**
 
-Le projet utilise un fichier de configuration pour les informations sensibles comme les mots de passe. Dans le dossier backend, vous trouverez un fichier appelé .env.example. Copiez ce fichier et renommez le en .env.
+Le projet utilise un fichier de configuration pour les informations sensibles comme les mots de passe. Dans le dossier backend, vous trouverez un fichier appelé .env.local Renommez le en .env
 
-Ouvrez le fichier .env avec un éditeur de texte. Vous devez y renseigner les informations suivantes.
+Ouvrez le fichier .env avec un éditeur de texte. Vous devez y renseigner les informations et mettez les informations suivantes :
 
-Pour le port du serveur, laissez PORT égal à 5000.
 
-Pour l environnement, laissez NODE_ENV égal à development.
+PORT=5000
+NODE_ENV=development
 
-Pour la base de données, renseignez DB_HOST avec localhost, DB_USER avec root, DB_PASSWORD avec le mot de passe que vous avez choisi lors de l installation de MySQL, et DB_NAME avec gestion_depenses.
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=Votre_mot_de_passe_phpMyAdmin
+DB_NAME=gestion_financiere
+DB_PORT=3306
 
-Pour la connexion, laissez DB_PORT égal à 3306.
+JWT_SECRET=une_phrase_longue_et_aléatoire
+JWT_EXPIRE=7d
 
-Pour la sécurité, créez une clé secrète pour JWT_SECRET. Vous pouvez mettre n importe quelle phrase longue et difficile à deviner.
+SESSION_SECRET=une_phrase_longue_et_aléatoire
 
-Pour l authenticification Google, vous devez créer un projet sur Google Cloud Console. Allez sur console.cloud.google.com, créez un projet, activez l API Google People, puis créez des identifiants de type OAuth. Vous obtiendrez un ID client et un secret client que vous mettrez dans GOOGLE_CLIENT_ID et GOOGLE_CLIENT_SECRET. Dans les URI de redirection autorisées, ajoutez http://localhost:5000/api/auth/google/callback.
+#Server
+PORT=5000
+NODE_ENV=development
+FRONTEND_URL=http://localhost:5173
 
-Pour FRONTEND_URL, mettez http://localhost:5173.
 
-Pour SESSION_SECRET, mettez une phrase longue et aléatoire.
 
-LANCEMENT DE L APPLICATION
+
+## **LANCEMENT DE L APPLICATION**
 
 Maintenant que tout est configuré, vous pouvez lancer l application.
 
-Le projet utilise un outil appelé concurrently qui permet de lancer le serveur et le client en même temps. Depuis le dossier racine du projet, exécutez la commande npm run dev.
+Le projet utilise un outil appelé concurrently qui permet de lancer le serveur et le client en même temps. Depuis le dossier racine du projet.
+
+Pour lancer l'application, exécutez la commande **npm run dev**
 
 Vous verrez deux serveurs démarrer. Le backend tourne sur le port 5000. Le frontend tourne sur le port 5173.
 
-Ouvrez votre navigateur et allez à l adresse http://localhost:5173. L application devrait s afficher.
+Ouvrez votre navigateur et allez à l'adresse http://localhost:5173. L application devrait s afficher.
 
 Pour arrêter l application, appuyez sur les touches Ctrl et C en même temps dans le terminal.
 
-FONCTIONNALITES DE L APPLICATION
+
+
+## **FONCTIONNALITES DE L APPLICATION**
 
 L application Gestion Dépenses propose plusieurs fonctionnalités.
 
