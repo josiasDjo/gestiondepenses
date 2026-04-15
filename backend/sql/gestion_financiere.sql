@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : 127.0.0.1:3306
--- Généré le : lun. 13 avr. 2026 à 15:43
+-- Généré le : mer. 15 avr. 2026 à 13:34
 -- Version du serveur : 8.4.7
 -- Version de PHP : 8.3.28
 
@@ -69,10 +69,19 @@ CREATE TABLE IF NOT EXISTS `comptes` (
   `solde` decimal(15,2) DEFAULT '0.00',
   `id_devise` int DEFAULT NULL,
   `id_menage` int DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id_compte`),
   KEY `id_devise` (`id_devise`),
   KEY `id_menage` (`id_menage`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+
+--
+-- Déchargement des données de la table `comptes`
+--
+
+INSERT INTO `comptes` (`id_compte`, `nom_compte`, `type_compte`, `solde`, `id_devise`, `id_menage`, `created_at`) VALUES
+(1, 'Compte Courant', 'MOBILE_MONEY', 90000.00, 1, 12, '2026-04-13 19:17:48'),
+(2, 'Compte Courant Dollars', '2', 150.00, 2, 12, '2026-04-13 19:30:40');
 
 -- --------------------------------------------------------
 
@@ -87,7 +96,48 @@ CREATE TABLE IF NOT EXISTS `devises` (
   `nom_devise` varchar(50) DEFAULT NULL,
   `taux_exchange` decimal(15,4) DEFAULT NULL,
   PRIMARY KEY (`id_devise`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+
+--
+-- Déchargement des données de la table `devises`
+--
+
+INSERT INTO `devises` (`id_devise`, `code_devise`, `nom_devise`, `taux_exchange`) VALUES
+(1, 'FC', 'Francs Congolais', NULL),
+(2, 'USD', 'Dollars Américains', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `invitations`
+--
+
+DROP TABLE IF EXISTS `invitations`;
+CREATE TABLE IF NOT EXISTS `invitations` (
+  `id_invitation` int NOT NULL AUTO_INCREMENT,
+  `id_menage` int NOT NULL,
+  `email_invite` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `id_expediteur` int NOT NULL,
+  `token` varchar(190) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `role` enum('admin','member') COLLATE utf8mb4_unicode_ci DEFAULT 'member',
+  `statut` enum('en_attente','acceptee','expiree') COLLATE utf8mb4_unicode_ci DEFAULT 'en_attente',
+  `date_creation` datetime DEFAULT CURRENT_TIMESTAMP,
+  `date_modification` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `date_expiration` datetime DEFAULT NULL,
+  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id_invitation`),
+  UNIQUE KEY `token` (`token`),
+  KEY `id_menage` (`id_menage`),
+  KEY `id_expediteur` (`id_expediteur`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Déchargement des données de la table `invitations`
+--
+
+INSERT INTO `invitations` (`id_invitation`, `id_menage`, `email_invite`, `id_expediteur`, `token`, `role`, `statut`, `date_creation`, `date_modification`, `date_expiration`, `createdAt`, `updatedAt`) VALUES
+(1, 12, 'enfant1@gmail.com', 14, 'mnz0j3ml7f1e255038fe31628ca660164c9d34dca7bc470248e56cb4e03398650da8b0aa8a8056fa96d485a2d2977948b844a9da256c5feaf3d493dfbe138a2c1cf165c839a7dbfa41659cb617cc652efb', 'member', 'acceptee', '2026-04-14 19:26:51', '2026-04-15 04:45:44', '2026-04-21 19:26:51', '2026-04-14 19:26:51', '2026-04-15 04:45:44');
 
 -- --------------------------------------------------------
 
@@ -101,6 +151,8 @@ CREATE TABLE IF NOT EXISTS `membres_menage` (
   `id_menage` int NOT NULL DEFAULT '0',
   `role` varchar(200) NOT NULL,
   `date_adhesion` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id_utilisateur`,`id_menage`),
   KEY `id_menage` (`id_menage`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -109,12 +161,15 @@ CREATE TABLE IF NOT EXISTS `membres_menage` (
 -- Déchargement des données de la table `membres_menage`
 --
 
-INSERT INTO `membres_menage` (`id_utilisateur`, `id_menage`, `role`, `date_adhesion`) VALUES
-(10, 8, 'admin', '2026-04-13 06:26:42'),
-(11, 9, 'admin', '2026-04-13 12:12:56'),
-(12, 10, 'admin', '2026-04-13 12:22:15'),
-(13, 11, 'admin', '2026-04-13 12:28:56'),
-(14, 12, 'admin', '2026-04-13 12:49:44');
+INSERT INTO `membres_menage` (`id_utilisateur`, `id_menage`, `role`, `date_adhesion`, `created_at`, `updated_at`) VALUES
+(10, 8, 'admin', '2026-04-13 06:26:42', '2026-04-15 06:14:58', '2026-04-15 06:14:58'),
+(11, 9, 'admin', '2026-04-13 12:12:56', '2026-04-15 06:14:58', '2026-04-15 06:14:58'),
+(12, 10, 'admin', '2026-04-13 12:22:15', '2026-04-15 06:14:58', '2026-04-15 06:14:58'),
+(13, 11, 'admin', '2026-04-13 12:28:56', '2026-04-15 06:14:58', '2026-04-15 06:14:58'),
+(14, 12, 'admin', '2026-04-13 12:49:44', '2026-04-15 06:14:58', '2026-04-15 06:14:58'),
+(15, 12, 'member', '2026-04-15 04:45:44', '2026-04-15 06:14:58', '2026-04-15 06:14:58'),
+(15, 13, 'admin', '2026-04-14 15:39:59', '2026-04-15 06:14:58', '2026-04-15 06:14:58'),
+(18, 16, 'admin', '2026-04-15 06:33:05', '2026-04-15 06:33:05', '2026-04-15 06:33:05');
 
 -- --------------------------------------------------------
 
@@ -129,7 +184,7 @@ CREATE TABLE IF NOT EXISTS `menages` (
   `id_devise_principale` int DEFAULT NULL,
   PRIMARY KEY (`id_menage`),
   KEY `id_devise_principale` (`id_devise_principale`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=latin1;
 
 --
 -- Déchargement des données de la table `menages`
@@ -147,7 +202,11 @@ INSERT INTO `menages` (`id_menage`, `nom_menage`, `id_devise_principale`) VALUES
 (9, 'Ménage de test8', NULL),
 (10, 'Ménage de test9', NULL),
 (11, 'Ménage de test10', NULL),
-(12, 'Ménage de test11', NULL);
+(12, 'Ménage de test11', NULL),
+(13, 'Ménage de enfant1', NULL),
+(14, 'Ménage de paid read', NULL),
+(15, 'Ménage de paid read', NULL),
+(16, 'Ménage de paid read', NULL);
 
 -- --------------------------------------------------------
 
@@ -184,7 +243,18 @@ CREATE TABLE IF NOT EXISTS `transactions` (
   `id_compte` int DEFAULT NULL,
   PRIMARY KEY (`id_transaction`),
   KEY `id_compte` (`id_compte`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
+
+--
+-- Déchargement des données de la table `transactions`
+--
+
+INSERT INTO `transactions` (`id_transaction`, `montant`, `date_transaction`, `description`, `type_flux`, `type_depense`, `categorie`, `id_compte`) VALUES
+(1, 20.00, '2026-04-14 00:00:00', '', 'Depense', NULL, 'Alimentation', 2),
+(2, 50.00, '2026-04-14 00:00:00', '', 'Revenu', NULL, 'Revenue', 2),
+(3, 10000.00, '2026-04-14 00:00:00', '', 'Depense', NULL, 'Transport', 1),
+(4, 30.00, '2026-04-15 00:00:00', '', 'Revenu', NULL, 'Revenu', 2),
+(5, 10.00, '2026-04-15 00:00:00', '', 'Depense', NULL, 'Loisir', 2);
 
 -- --------------------------------------------------------
 
@@ -197,16 +267,16 @@ CREATE TABLE IF NOT EXISTS `utilisateurs` (
   `id_utilisateur` int NOT NULL AUTO_INCREMENT,
   `nom` varchar(100) NOT NULL,
   `email` varchar(150) NOT NULL,
-  `mot_de_passe` varchar(255) NOT NULL,
+  `mot_de_passe` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci DEFAULT NULL,
   `google_id` text,
   `avatar` text,
   `provider` text NOT NULL,
   `email_verifie` tinyint(1) DEFAULT '0',
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id_utilisateur`),
   UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=latin1;
 
 --
 -- Déchargement des données de la table `utilisateurs`
@@ -226,7 +296,9 @@ INSERT INTO `utilisateurs` (`id_utilisateur`, `nom`, `email`, `mot_de_passe`, `g
 (11, 'test8', 'test8@gmail.com', '$2a$10$ckyZIdpUb3zfrf0uj0eST.c08ZiMqnrlulz04BXQA8HqXU49ItONq', NULL, NULL, 'local', 0, '2026-04-13 12:12:56', '2026-04-13 12:12:56'),
 (12, 'test9', 'test9@gmail.com', '$2a$10$vsLuWO/rxc4YEI11BmMNq.S07Ei8f2gFJiFIkp5naN1eBBxDyPkMm', NULL, NULL, 'local', 0, '2026-04-13 12:22:15', '2026-04-13 12:22:15'),
 (13, 'test10', 'test10@gmail.com', '123456', NULL, NULL, 'local', 0, '2026-04-13 12:28:56', '2026-04-13 12:28:56'),
-(14, 'test11', 'test11@gmail.com', '$2a$10$8y.pI9Zz4ehDSGf8Qos0teNYs3K.UyKcxXsQ8OfB1Sf9q3BTUvXCm', NULL, NULL, 'local', 0, '2026-04-13 12:49:43', '2026-04-13 12:49:43');
+(14, 'test11', 'test11@gmail.com', '$2a$10$8y.pI9Zz4ehDSGf8Qos0teNYs3K.UyKcxXsQ8OfB1Sf9q3BTUvXCm', NULL, NULL, 'local', 0, '2026-04-13 12:49:43', '2026-04-13 12:49:43'),
+(15, 'enfant1', 'enfant1@gmail.com', '$2a$10$BIRmnRFYsiX7wdcwAbyPFO.m1VrKLWmHn6uSlw7R6t4XVJTedZSdm', NULL, NULL, 'local', 0, '2026-04-14 15:39:59', '2026-04-14 15:39:59'),
+(18, 'paid read', 'readpaid205@gmail.com', NULL, '107146376685910178949', 'https://lh3.googleusercontent.com/a/ACg8ocL7N0Qt39cP6C9uEVbmzoI2Angt3FNjphrH4UVqIKRtzQAKuw=s96-c', 'google', 1, '2026-04-15 06:33:05', '2026-04-15 06:33:05');
 
 --
 -- Contraintes pour les tables déchargées
