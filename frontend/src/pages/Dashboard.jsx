@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FiPlus, FiTrendingUp, FiTrendingDown, FiDollarSign, FiUsers, FiRefreshCw } from 'react-icons/fi';
+import { FiPlus, FiTrendingUp, FiTrendingDown, FiDollarSign, FiUsers, FiRefreshCw, FiHome } from 'react-icons/fi';
 import { Line, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import toast from 'react-hot-toast';
@@ -20,7 +20,7 @@ const getDeviseColor = (code) => {
 };
 
 const Dashboard = () => {
-  const { menageActif } = useMenage();
+  const { menageActif, loading: menageLoading } = useMenage();
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [stats, setStats] = useState({
     global: { totalBalance: 0, totalIncome: 0, totalExpense: 0 },
@@ -31,10 +31,14 @@ const Dashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
 
-  // Fonction pour charger les données - sera appelée manuellement
+  // Fonction pour charger les données
   const fetchDashboardData = useCallback(async (showToast = false) => {
-    if (!menageActif) return;
+    if (!menageActif) {
+      console.log('⏳ Attente du ménage actif...');
+      return;
+    }
     
     try {
       setLoading(true);
@@ -63,18 +67,27 @@ const Dashboard = () => {
     }
   }, [menageActif]);
 
-  // Rafraîchissement manuel (bouton refresh)
   const handleRefresh = () => {
     setRefreshing(true);
     fetchDashboardData(true);
   };
 
-  // Chargement initial UNIQUEMENT quand menageActif change
+  // Attendre que les ménages soient chargés avant de charger les données
   useEffect(() => {
-    if (menageActif) {
+    if (!menageLoading && menageActif && !initialLoadDone) {
+      console.log('✅ Ménage actif trouvé, chargement des données...', menageActif);
+      setInitialLoadDone(true);
       fetchDashboardData();
     }
-  }, [menageActif]); // ← Seule dépendance : menageActif
+  }, [menageLoading, menageActif, initialLoadDone, fetchDashboardData]);
+
+  // Recharger quand menageActif change (après un changement manuel)
+  useEffect(() => {
+    if (initialLoadDone && menageActif) {
+      console.log('🔄 Changement de ménage, rechargement...');
+      fetchDashboardData();
+    }
+  }, [menageActif, initialLoadDone, fetchDashboardData]);
 
   const lineChartData = {
     labels: stats.evolution?.labels || [],
@@ -109,10 +122,35 @@ const Dashboard = () => {
     plugins: { legend: { position: 'bottom' } }
   };
 
-  if (loading && !stats.global.totalBalance) {
+  // Affichage du chargement tant que les ménages ne sont pas prêts
+  if (menageLoading || (loading && !initialLoadDone)) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="w-16 h-16 border-t-4 border-primary-500 border-solid rounded-full animate-spin"></div>
+        <div className="text-center">
+          <div className="w-16 h-16 border-t-4 border-primary-500 border-solid rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement de votre espace...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Si pas de ménage actif après chargement
+  if (!menageActif && !menageLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <FiHome className="w-10 h-10 text-yellow-600" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Aucun ménage trouvé</h2>
+          <p className="text-gray-600 mb-4">Vous n'êtes associé à aucun ménage.</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-primary-500 text-white px-4 py-2 rounded-lg"
+          >
+            Rafraîchir
+          </button>
+        </div>
       </div>
     );
   }
@@ -206,7 +244,7 @@ const Dashboard = () => {
         </div>
 
         {/* Recent Transactions */}
-        <TableTransaction key={menageActif?.id_menage} /> {/* key force le rechargement quand le ménage change */}
+        <TableTransaction key={menageActif?.id_menage} />
 
         {/* Modal Invitation */}
         {showInviteModal && menageActif && (
@@ -216,7 +254,7 @@ const Dashboard = () => {
             onClose={() => setShowInviteModal(false)}
             onSuccess={() => {
               setShowInviteModal(false);
-              fetchDashboardData(true); // Rafraîchir après invitation
+              fetchDashboardData(true); 
             }}
           />
         )}

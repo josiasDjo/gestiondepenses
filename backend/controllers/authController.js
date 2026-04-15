@@ -31,9 +31,6 @@ const register = async (req, res) => {
       provider: 'local'
     });
     
-    // Associer l'utilisateur au ménage
-    console.log('Utilisateur créé avec ID:', user.id_utilisateur);
-    
     // Créer le ménage
     const menage = await Menage.create({ 
       nom_menage: `Ménage de ${nom}` 
@@ -47,7 +44,6 @@ const register = async (req, res) => {
       menage.id_menage,
       'admin'
     );
-    // console.log('Association créée:', association);
     const token = genererToken(user.id_utilisateur);
     
     res.status(201).json({
@@ -119,6 +115,30 @@ const googleCallback = (req, res, next) => {
         if (err || !user) {
           console.log(`Auth google check error : ${err}`)
           return res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`);
+        }
+        // Vérifier si l'utilisateur a déjà des ménages
+        const menages = await user.getMenages();
+        
+        if (!menages || menages.length === 0) {
+          console.log('Création d\'un ménage par défaut pour:', user.nom);
+          
+          // Créer le ménage
+          const menage = await Menage.create({ 
+            nom_menage: `Ménage de ${user.nom}` 
+          });
+          
+          console.log('Ménage créé avec ID:', menage.id_menage);
+          
+          // Créer l'association via le contrôleur
+          await membresMenageController.creerAssociation(
+            user.id_utilisateur,
+            menage.id_menage,
+            'admin'
+          );
+          
+          console.log('Association créée entre', user.nom, 'et le ménage', menage.nom_menage);
+        } else {
+          console.log('Utilisateur déjà membre de', menages.length, 'ménage(s)');
         }
         
         // Générer un token JWT

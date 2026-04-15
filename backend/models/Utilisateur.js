@@ -12,7 +12,7 @@ const Utilisateur = sequelize.define('Utilisateur', {
     email_verifie: { type: DataTypes.BOOLEAN, defaultValue: false}
   }, {
     tableName: 'utilisateurs',
-    timestamps: true,
+    timestamps: false,
     underscored: true,
     hooks: {
       beforeCreate: async (user) => {
