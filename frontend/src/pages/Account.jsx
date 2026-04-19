@@ -3,9 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { FiPlus, FiEdit2, FiTrash2, FiEye, FiCreditCard, FiDollarSign, FiTrendingUp, FiTrendingDown, FiX } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import api from '../services/api';
+import { useMenage } from '../context/MenageContext';
+import { useContext } from 'react';
 
 const Comptes = () => {
     const [comptes, setComptes] = useState([]);
+    const { menageActif, loading: menageLoading } = useMenage();
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingCompte, setEditingCompte] = useState(null);
@@ -69,13 +72,15 @@ const Comptes = () => {
                 type_compte: formData.type_compte, 
                 solde_initial: formData.solde_initial, 
                 id_devise: formData.devise, 
-                // id_menage: formData.nom_compte
+                id_menage: menageActif.id_menage
             });
+            console.log('===== Menage recup useContext : ', menageActif.id_menage)
             toast.success('Compte créé avec succès');
         }
         setShowModal(false);
         fetchComptes();
         } catch (error) {
+            console.log('Erreur : ', error)
         toast.error(error.response?.data?.message || 'Erreur');
         }
     };
