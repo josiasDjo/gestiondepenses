@@ -29,8 +29,8 @@ export const useMenage = () => {
         
         const menagesData = response.data || [];
         
-        console.log('✅ Ménages récupérés:', menagesData.length);
-        console.log('📋 Données:', menagesData);
+        console.log('Ménages récupérés:', menagesData.length);
+        console.log('Données:', menagesData);
         
         setMenages(menagesData);
         
@@ -41,25 +41,25 @@ export const useMenage = () => {
                 const parsed = JSON.parse(savedMenage);
                 const stillExists = menagesData.find(m => m.id_menage === parsed.id_menage);
                 if (stillExists) {
-                console.log('📌 Ménage actif restauré:', stillExists.nom_menage);
+                console.log('Ménage actif restauré:', stillExists.nom_menage);
                 setMenageActif(stillExists);
                 } else {
-                console.log('📌 Premier ménage sélectionné par défaut');
+                console.log('Premier ménage sélectionné par défaut');
                 setMenageActif(menagesData[0]);
                 }
             } catch (e) {
                 setMenageActif(menagesData[0]);
             }
             } else {
-            console.log('📌 Premier ménage sélectionné par défaut');
+            console.log('Premier ménage sélectionné par défaut');
             setMenageActif(menagesData[0]);
             }
         } else {
-            console.warn('⚠️ Aucun ménage trouvé pour cet utilisateur');
+            console.warn('Aucun ménage trouvé pour cet utilisateur');
             setMenageActif(null);
         }
         } catch (error) {
-        console.error('❌ Erreur chargement ménages:', error);
+        console.error('Erreur chargement ménages:', error);
         console.error('Détails:', error.response?.data || error.message);
         setMenageActif(null);
         } finally {
@@ -69,7 +69,7 @@ export const useMenage = () => {
     };
 
     const changerMenage = (menage) => {
-        console.log('🔄 Changement de ménage:', menage.nom_menage);
+        console.log('Changement de ménage:', menage.nom_menage);
         setMenageActif(menage);
         localStorage.setItem('menageActif', JSON.stringify(menage));
     };

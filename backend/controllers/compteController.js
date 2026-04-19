@@ -19,6 +19,21 @@ const getMenagesByUser = async (userId) => {
   return membresMenages.map(m => m.id_menage);
 };
 
+// Vérifier que l'utilisateur est membre de ce ménage
+const estMembreDuMenage = async (id_utilisateur, id_menage) => {
+    try {
+        const membre = await MembresMenage.findOne({
+            utilisateur_id: id_utilisateur,
+            menage_id: id_menage
+        });
+        
+        return membre !== null;
+    } catch (error) {
+        console.error("Erreur lors de la vérification:", error);
+        return false;
+    }
+};
+
 /**
  * Créer un nouveau compte
  */
@@ -33,12 +48,11 @@ const createCompte = async (req, res) => {
     
     const userId = user.id_utilisateur;
 
-    const { nom_compte, type_compte, solde_initial, id_devise } = req.body;
-    const id_menage = 12
-    
+    const { nom_compte, type_compte, solde_initial, id_devise, id_menage } = req.body;
+
     // Vérifier que l'utilisateur est membre de ce ménage
-    const menageIds = await getMenagesByUser(userId);
-    if (!menageIds.includes(parseInt(id_menage))) {
+    const menageIds = await estMembreDuMenage(userId, id_menage);
+    if (!menageIds) {
       return res.status(403).json({ message: 'Vous n\'êtes pas membre de ce ménage' });
     }
     
@@ -62,7 +76,7 @@ const createCompte = async (req, res) => {
 };
 
 /**
- * Récupérer tous les comptes de l'utilisateur (via ses ménages)
+ * Récupérer tous les comptes de l'utilisateur via ses ménages
  */
 const getMesComptes = async (req, res) => {
   try {
@@ -222,7 +236,8 @@ const updateCompte = async (req, res) => {
 const deleteCompte = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id_utilisateur;
+    const user = await getUserFromToken(req);
+    const userId = user.id_utilisateur;
     
     const menageIds = await getMenagesByUser(userId);
     
