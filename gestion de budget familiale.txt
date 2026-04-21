@@ -1,0 +1,32 @@
+// Application simple de gestion de budget familial
+
+class BudgetMenage {
+    constructor() {
+        this.revenus = 0;
+        this.depenses = [];
+    }
+
+    ajouterRevenu(montant) {
+        this.revenus += montant;
+    }
+
+    ajouterDepense(description, montant) {
+        this.depenses.push({ description, montant });
+    }
+
+    calculerTotalDepenses() {
+        return this.depenses.reduce((total, dep) => total + dep.montant, 0);
+    }
+
+    soldeRestant() {
+        return this.revenus - this.calculerTotalDepenses();
+    }
+}
+
+// Exemple d'utilisation
+const budget = new BudgetMenage();
+budget.ajouterRevenu(500);
+budget.ajouterDepense("Nourriture", 150);
+budget.ajouterDepense("Transport", 50);
+
+console.log("Solde restant :", budget.soldeRestant());
