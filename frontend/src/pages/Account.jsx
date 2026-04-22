@@ -51,7 +51,7 @@ const Comptes = () => {
             nom_compte: '',
             type_compte: 'BANK',
             solde_initial: 0,
-            devise: ''
+            devise: '1'
         });
         }
         setShowModal(true);
@@ -299,7 +299,7 @@ const Comptes = () => {
                         </label>
                         <select
                             value={formData.devise}
-                            onChange={(e) => setFormData({ ...formData, type_compte: e.target.value })}
+                            onChange={(e) => setFormData({ ...formData, devise: e.target.value })}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         >
                             <option value="1">1. Francs Congolais</option>
