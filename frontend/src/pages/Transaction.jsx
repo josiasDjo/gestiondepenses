@@ -70,7 +70,7 @@ const Transactions = () => {
         setLoading(false);
         }
     };
-
+    //Recuperer les stats 
     const fetchStats = async () => {
         try {
         const response = await api.get('/transactions/stats');
