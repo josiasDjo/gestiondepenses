@@ -1,0 +1,95 @@
+{
+    "_type": "Project",
+    "_id": "AAAAAAFF+h6SjaM2Hec=",
+    "name": "Gestion Financiere Menage",
+    "ownedElements": [
+        {
+            "_type": "UMLModel",
+            "_id": "AAAAAAFF+qBWK6M3Z8Y=",
+            "name": "Model",
+            "ownedElements": [
+                {
+                    "_type": "UMLActivity",
+                    "_id": "ACTIVITY_01",
+                    "name": "Enregistrement Depense",
+                    "nodes": [
+                        {
+                            "_type": "UMLInitialNode",
+                            "_id": "AN_INIT",
+                            "name": "InitialNode1"
+                        },
+                        {
+                            "_type": "UMLAction",
+                            "_id": "AN_SAISIE",
+                            "name": "Saisir Depense"
+                        },
+                        {
+                            "_type": "UMLDecisionNode",
+                            "_id": "AN_DECISION",
+                            "name": "Decision1"
+                        },
+                        {
+                            "_type": "UMLAction",
+                            "_id": "AN_ALERTE",
+                            "name": "Creer Alerte"
+                        },
+                        {
+                            "_type": "UMLAction",
+                            "_id": "AN_SAVE",
+                            "name": "Enregistrer Transaction"
+                        },
+                        {
+                            "_type": "UMLActivityFinalNode",
+                            "_id": "AN_FINAL",
+                            "name": "ActivityFinalNode1"
+                        }
+                    ]
+                },
+                {
+                    "_type": "UMLDeploymentDiagram",
+                    "_id": "DEPLOY_01",
+                    "name": "Architecture Deploiement",
+                    "ownedElements": [
+                        {
+                            "_type": "UMLNode",
+                            "_id": "NODE_CLIENT",
+                            "name": "Navigateur Web (ReactJS)"
+                        },
+                        {
+                            "_type": "UMLNode",
+                            "_id": "NODE_SERVER",
+                            "name": "Serveur Application (NodeJS/Express)"
+                        },
+                        {
+                            "_type": "UMLNode",
+                            "_id": "NODE_DB",
+                            "name": "Serveur BD (MySQL)"
+                        }
+                    ]
+                },
+                {
+                    "_type": "UMLInteraction",
+                    "_id": "SEQ_01",
+                    "name": "Sequence Authentification",
+                    "participants": [
+                        {
+                            "_type": "UMLLifeline",
+                            "_id": "LL_USER",
+                            "name": "Utilisateur"
+                        },
+                        {
+                            "_type": "UMLLifeline",
+                            "_id": "LL_APP",
+                            "name": "Application"
+                        },
+                        {
+                            "_type": "UMLLifeline",
+                            "_id": "LL_DB",
+                            "name": "Base de Donnees"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
